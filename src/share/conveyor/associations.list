@@ -1,0 +1,156 @@
+#!bash
+# Copyright (c) 2017, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+################################## Television ##################################
+
+declare -A -r AlternateTitles=(
+  ['2014-']=''
+  ['24 legacy']='24-legacy'
+  ['amazon with bruce perry']='amazon 2008'
+  ['american playboy the hugh hefner story']='american playboy-the hugh hefner story'
+  ['batman the animated series']='batman the animated series'
+  ['battlestar galactica miniseries']='battlestar galactica 2003'
+  ['beowolf return to the shieldlands']='beowulf-return to the shieldlands'
+  ['the bridge us']='the bridge 2013'
+  ['the case book of sherlock holmes']='the case-book of sherlock holmes'
+  ['chemistry a volatile history']='chemistry-a volatile history'
+  ['chip n dale rescue rangers']='chip n dale-rescue rangers'
+  ['clerks the animated series']='clerks-the animated series'
+  ['continent 7 antarctica']='continent 7-antarctica'
+  ['the crow stairway to heaven']='the crow-stairway to heaven'
+  ['dark matters twisted but true']='bark matters-twisted but true'
+  ['dinotopia the series']='dinotopia'
+  ['degrassi next class']='degrassi-next class'
+  ['doctor doctor au']='doctor doctor'
+  ['pulse au']='pulse 2017'
+  # FIXME: test prime suspect 1973
+  ['power rangers ninja steel']='power rangers'
+  ['tangled the series']='tangled-the series'
+  ['utopia au']='utopia'
+  ###
+  #['11 22 63']='eleven twotwo sixtythree'
+  #['Adventure Time']='Adventure Time With Finn & Jake'
+  #["Agatha Christie's Poirot"]='aaf-poirot'
+  #['Ant Man']="Marvel's Ant Man"
+  #['Avatar: The Last AirBender']='Avatar: The Last Air Bender'
+  #['Avengers']="Marvel's Avengers"
+  #['The Big Bang Theory']='Hawkings Kids'
+  #['CSI: Crime Scene Investigation']='CSI'
+  #['The Detour']='Road Trip'
+  #['Doogie Howser, M.D.']='Doogie Howser'
+  #['Flight of the Conchords']='tvp-conchords'
+  #['Iron Fist']="Marvel's Iron Fist"
+  #["Jay Leno's Garage"]='he got fired from nbc and needed work|cool cars'
+  #['Kingdom of Plants']='Kingdom of Plants with David Attenborough'
+  #['Legends of Tomorrow']="DC'S Legends of Tomorrow"
+  #['Lovesick']='Scrotal Recall|Lovesick AKA Scrotal Recall'
+  #['Luke Cage']="Marvels's Luke Cage"
+  #['The Man Show']='Man Show'
+  #['Mr. Bean: The Animated Series']='Mr Bean Animated'
+  #['Peep Show']='pshow|Peep.Show.REPACK'
+  #['The Saboteurs']='Kampen Om Tungtvannet'
+  #['Saved by the Bell: The College Years']='Saved by the Bell: tcy'
+  #['Shadowhunters']='Shadowhunters: The Mortal Instruments'
+  #['Spartacus']='Spartacus: Blood & Sand|Spartacus: Gods of the Arena|Spartacus: Vengeance|Spartacus: War Of The Damned'
+  #['Stargate SG1']='SG1'
+  #["TURN: Washington's Spies"]='TURN'
+  #['Underbelly']='(aaf |)Underbelly: A Tale of Two Cities|(aaf |)Underbelly: The Golden Mile|(aaf |)Underbelly Razor|Underbelly Badness|Underbelly Squizzy'
+  #['Wrecked']='rekt'
+  #['The X-Files']='The X Files'
+  #['Zoo']='zooooooo'
+)
+
+declare -A -r ShowYear=(
+  ['19-2 2014']=2014
+  ['aftermath 2016']=2016
+  ['alien nation']=1989
+  ['amazon 2008']=2008
+  ['angel']=1999
+  ['the angry beavers']=1997
+  ['aquarius 2015']=2015
+  ['the arrangement 2017']=2017
+  ['batman 1966']=1966
+  ['battlestar galactica']=1978
+  ['battlestar galactica 2003']=2003
+  ['battlestar galactica 2004']=2004
+  ['beauty and the beast 2012']=2012
+  ['being human 2008']=2008
+  ['borderline 2016']=2016
+  ['born to kill 2017']=2017
+  ['the bridge 2013']=2013
+  ['come fly with me']=2010
+  ['crashing 2017']=2017
+  ['dark side of the sun']=1983
+  ['the day of the triffids 2009']=2009
+  ['dinotopia']=2002
+  ['doctor who']=1963
+  ['doctor who 2005']=2005
+  ['dow hour of great mysteries']=1960
+  ['dragon ball z']=1989
+  ['ducktales 2017']=2017
+  ['eyewitness 2016']=2016
+  ['fearless 2017']=2017
+  ['the flash 2014']=2014
+  ['the fosters 2013']=2013
+  ['frontier']=2016
+  ['galapagos 2017']=2017
+  ['the game 2014']=2014
+  ['genius 2017']=2017
+  ['the holdbergs 2013']=2013
+  ['the hitchhiker']=1983
+  ['human target 2010']=2010
+  ['ice 2016']=2016
+  ['the incredible hulk']=1978
+  ['jay lenos garage']=2015
+  ['jericho 2016']=2016
+  ['knight rider 2008']=2008
+  ['oaded 2017']=2017
+  ['love child 2014']=2014
+  ['macgyver 2016']=2016
+  ['the magicians 2015']=2015
+  ['mickey mouse']=2013
+  ['nasas unexplained files']=2014
+  ['poldark 2015']=2015
+  ['pulse 2017']=2017
+  ['the pretender 1996']=1996
+  ['rebel 2017']=2017
+  ['rush hour']=2016
+  ['scandal 2012']=2012
+  ['samurai jack']=2001
+  ['taboo']=2016
+  ['taken 2017']=2017
+  ['teachers 2016']=2016
+  ['time after time 2017']=2017
+  ['timeless 2016']=2016
+  ['training day']=2017
+  ['transporter-the series']=2012
+  ['trial and error']=2017
+  ['wanted 2016']=2016
+  ['wasteland']=2017
+  ['wrecked']=2016
+)
+
+declare -a -r MisdetectedTitles=(
+  '19-2 2014'
+)
+
+declare -A -r TVDBid=(
+  ['The 100']='268592'
+  ['2 Broke Girls']='248741'
+  ['8 Simple Rules']='78461'
+  ['Accused']='72663'
+  ['Adventure Time']='152831'
+  ['Aeon Flux']='78660'
+)

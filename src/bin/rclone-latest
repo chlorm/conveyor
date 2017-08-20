@@ -1,0 +1,36 @@
+#!bash
+# Copyright (c) 2017, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+
+PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
+source "$PREFIX/share/conveyor/common.bash"
+
+# FIXME: disable redirects to http
+curl -O 'https://beta.rclone.org/rclone-beta-latest-linux-amd64.zip'
+
+# FIXME: unzip into tmp directory
+unzip 'rclone-beta-latest-linux-amd64.zip'
+
+# FIXME: use install, and better matching
+cp rclone-v*-linux-amd64/rclone "$PREFIX/bin"
+
+# FIXME: make cleaup func/trap
+rm -rf rclone-v*-linux-amd64/
+rm rclone-beta-latest-linux-amd64.zip

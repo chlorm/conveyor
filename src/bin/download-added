@@ -1,0 +1,59 @@
+#!bash
+# Copyright 2017, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+
+PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
+source "$PREFIX/share/conveyor/common.bash"
+
+declare -r torrentid="$1"
+declare -r torrentname="$2"
+declare -r torrentpath="$3"
+
+# FIXME: work in progress
+exit 0
+
+declare -r DelugeAddedLogFile="$HOME/.deluge-added.log"
+
+# A torrent could have been downloaded before it was propagated on the tracker,
+# rather than waiting libtorrent's default 30min retry, retry every couple of
+# seconds incase is appears.
+for i in {1..45}; do
+  sleep 2
+  echo "$torrentid: Running $i times" >> "$DelugeAddedLogFile"
+  line="$(
+    deluge-console "connect 127.0.0.1:<port> <user> <pass>; info" "$torrentid" |
+      grep "Tracker status"
+  )"
+  echo "$line" >> "$DelugeAddedLogFile"
+  case "$line" in
+    *unregistered*|*Sent*)
+      eval deluge-console \
+        "connect 127.0.0.1:<port> <user> <pass>\; update-tracker '$torrentid'"
+      ;;
+    *)
+      echo "Found working torrent: $torrentname $torrentpath $torrentid" >> \
+        "$DelugeAddedLogFile"
+      exit 0
+      ;;
+  esac
+done
+
+exit 0
+

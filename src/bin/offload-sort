@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+# Copyright (c) 2017, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Sorts the contents of the offload directory using guessit and other tools.
+
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+
+declare -r PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
+source "$PREFIX/share/conveyor/common.bash"
+source "$PREFIX/share/conveyor/shows.list"
+source "$PREFIX/share/conveyor/associations.list"
+
+if type lib-bash; then
+  source "$(lib-bash)"
+  trap 'Log::Trace' ERR
+fi
+
+trap 'for i in "${TMP_FILES_LIST[@]}"; do rm -fv "$i" >&2; done' ERR EXIT SIGINT SIGTERM
+declare -a TMP_FILES_LIST=()
+
+trap 'exit' ERR SIGINT SIGTERM
+
+normalize_string() {
+  local -r String="$1"
+
+  echo "$String" |
+      tr [A-Z] [a-z] |
+      # Sanitize illegal characters from title
+      sed -e 's/:\s/-/g' \
+        -e 's/\./ /g' \
+        -e "s/'//g" \
+        -e 's/!//g' \
+        -e 's/,//' \
+        -e 's/?//' \
+        -e 's/://' \
+        -e 's/&/and/'
+}
+
+build_index () {
+  local -a Array
+  local i
+  local -r Name="$1"
+  declare -A -g ${Name}Index
+
+  eval Array=("\"\${${Name}[@]}\"")
+
+  set +o nounset
+  for i in "${!Array[@]}"; do
+    eval ${Name}Index["${Array["$i"]}"]="$i"
+  done
+  set -o nounset
+}
+
+build_remote_path_television() {
+  local FormattedTitle
+  local -r Title="$1"
+  local -r Season=$2
+  local SeasonPadded
+  local SortChar
+  local TitleAlt TitleAlt2
+  local -r Year=$3
+
+  TitleNormalized="$(normalize_string "$Title")"
+  echo "$TitleNormalized" >&2
+
+  SortChar="$(
+    echo "$TitleNormalized" |
+      # Ignore indefinite articles
+      sed -e 's/^a\s//g' \
+        -e 's/^an\s//g' \
+        -e 's/^the\s//g' |
+      cut -c 1
+  )"
+
+  set +o nounset
+  if [ -n "${AlternateTitles["$TitleNormalized"]}" ]; then
+    TitleAlt="${AlternateTitles["$TitleNormalized"]}"
+  elif [ -n "${AlternateTitles["$TitleNormalized $Year"]}" ]; then
+    TitleAlt="${AlternateTitles["$TitleNormalized $Year"]}"
+  else
+    TitleAlt="$TitleNormalized"
+  fi
+  set -o nounset
+
+  set +o nounset
+  if [ -n "${ShowYear["$TitleAlt"]}" ]; then
+    # Attempt to pune year from title if set, we handle re-appending below
+    TitleAlt2="$(echo "$TitleAlt" | sed -e "s/ ${ShowYear["${TitleAlt}"]}$//")"
+  elif [ -n "$Year" ]; then
+    TitleAlt2="$(echo "$TitleAlt" | sed -e "s/ $Year//")"
+  else
+    TitleAlt2="$TitleAlt"
+  fi
+  set -o nounset
+
+  # Append a disambigator if one exists
+  set +o nounset
+  if [ -n "${TVDBid["$TitleAlt"]}" ]; then
+    TitleAlt2+="_${TVDBid["$TitleAlt"]}"
+  elif [ -n "${ShowYear["$TitleAlt"]}" ]; then
+    TitleAlt2+="_${ShowYear["$TitleAlt"]}"
+  elif [ -n "${ShowYear["$TitleAlt $Year"]}" ]; then
+    TitleAlt2+="_${ShowYear["$TitleAlt $Year"]}"
+  fi
+  set -o nounset
+
+  if [ $Season -le 9 ]; then
+    SeasonPadded="0$Season"
+  else
+    SeasonPadded=$Season
+  fi
+
+  echo "$SortChar/${TitleAlt2// /.}/season$SeasonPadded/"
+}
+
+guessit_wrapper() {
+  local -r Input="$1"
+  local TmpFile
+
+  TmpFile="$(mktemp)"
+  TMP_FILES_LIST+=("$TmpFile")
+
+  guessit --json --advanced --enforce-list "$Input" > "$TmpFile"
+
+  echo "$TmpFile"
+}
+
+# FIXME: currently we only take the first elem returned
+guessit_container() {
+  local -r File="$1"
+
+  jq -r -c -M '.container[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_season() {
+  local -r File="$1"
+
+  jq -r -c -M '.season[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_title() {
+  local -r File="$1"
+
+  jq -r -c -M '.title[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_type() {
+  local -r File="$1"
+
+  jq -r -c -M '.type[0].value' "$File"
+}
+
+guessit_year() {
+  local -r File="$1"
+
+  jq -r -c -M '.year[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_date() {
+  local -r File="$1"
+
+  jq -r -c -M '.date[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_date_raw() {
+  local -r File="$1"
+
+  jq -r -c -M '.date[0]|select(.raw != null)|.raw' "$File"
+}
+
+################################################################################
+
+OffloadIndex="$(mktemp)"
+TMP_FILES_LIST+=("$OffloadIndex")
+echo "Building file list..." >&2
+rc_ls "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR" > "$OffloadIndex"
+
+while read OffloadFile; do
+  echo "file: $OffloadFile" >&2
+
+  # Sanitize
+  OffloadFileSanitized="$(echo "$OffloadFile" | sed -e 's/^-/\\-/')"
+ 
+  GuessitFile="$(guessit_wrapper "$(basename "$OffloadFileSanitized")")"
+  if [ "$(basename "$OffloadFileSanitized")" == "$OffloadFileSanitized" ]; then
+    GuessitPath="$GuessitFile"
+  else
+    GuessitPath="$(guessit_wrapper "$OffloadFileSanitized")"
+  fi 
+
+  GuessitFileType="$(guessit_type "$GuessitFile")"
+  GuessitPathType="$(guessit_type "$GuessitPath")"
+  if [ "$GuessitFileType" != "$GuessitPathType" ]; then
+    # Guessit always return movie if it does not detect episode.
+    if [ "$GuessitPathType" != 'episode' ]; then
+      echo "ERROR: could not determine type: $OffloadFile" >&2
+      echo "f:$GuessitFileType, p:$GuessitPathType" >&2
+      continue
+    fi
+  fi
+
+  GuessitFileTitle="$(guessit_title "$GuessitFile")"
+  GuessitPathTitle="$(guessit_title "$GuessitPath")"
+  if [ "$GuessitFileTitle" != "$GuessitPathTitle" ]; then
+    if ([ -n "$GuessitFileTitle" ] && [ -n "$GuessitPathTitle" ]) || \
+      [ -z "$GuessitPathTitle" ]; then
+      echo "ERROR: failed to detect title, multiple matches" >&2
+      echo "f:$GuessitFileTitle, p:$GuessitPathTitle" >&2
+    fi
+  fi
+
+  GuessitPathDateRaw="$(guessit_date_raw "$GuessitPath")"
+  build_index MisdetectedTitles
+  set +o nounset
+  if [ -n "$GuessitPathDateRaw" ] && \
+    [ "${MisdetectedTitlesIndex["$(normalize_string "$GuessitPathDateRaw")"]}" ]; then
+    echo "correcting misdetected title $GuessitPathTitle -> $GuessitPathDateRaw" >&2
+    GuessitPathTitle="$GuessitPathDateRaw"
+  fi
+  set -o nounset
+
+  GuessitFileYear="$(guessit_year "$GuessitFile")"
+  GuessitPathYear="$(guessit_year "$GuessitPath")"
+
+  GuessitContainer="$(guessit_container "$GuessitFile")"
+
+  if [ "$GuessitPathType" == 'episode' ]; then
+    # TODO: date based formats
+    GuessitFileSeason="$(guessit_season "$GuessitFile")"
+    GuessitPathSeason="$(guessit_season "$GuessitPath")"
+    if [ "$GuessitFileSeason" != "$GuessitPathSeason" ]; then
+      if ([ -n "$GuessitPathSeason" ] && [ -n "$GuessitFileSeason" ]) || \
+         [ -z "$GuessitPathSeason" ]; then
+        # We don't rely on season detected from only filename because
+        # dates and other integers sometimes get mis-detected.
+        echo "ERROR: detected as episode, but failed to get season" >&2
+        echo "f:$GuessitFileSeason, p:$GuessitPathSeason," >&2
+        continue
+      fi
+    fi
+    if [ -n "$GuessitFileYear$GuessitPathYear" ]; then
+      # TODO: Disambiguate if year is provided
+      true
+    fi
+
+    TitleFinal="$GuessitPathTitle"
+    SeasonFinal="$GuessitPathSeason"  # FIXME: make sure is an integer
+    echo "sf:$SeasonFinal" >&2
+    if [ -z "$SeasonFinal" ]; then
+      echo "ERROR: failed to detect season" >&2
+      echo "final:$SeasonFinal" >&2
+      continue
+    fi
+    YearFinal="$GuessitPathYear"  # FIXME: validate
+
+    RemotePath="$(
+      build_remote_path_television "$TitleFinal" "$SeasonFinal" "$YearFinal"
+    )"
+
+    echo -e "\e[32mMoving: $OffloadFile -> $RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television/$RemotePath\e[0m" >&2
+    rc_move \
+      "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$OffloadFile" \
+      "$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television/$RemotePath"
+  elif [ "$GuessitPathType" == 'movie' ]; then
+    if [ -z "$GuessitPathYear$GuessitFileYear" ]; then
+      echo "ERROR: year required for type movie" >&2
+      # XXX: for now we could add to a list and at the end iterate over the
+      #      list and ask the user to interactively approve each move.
+      continue
+    fi
+    # TODO: make sure move is not type hdtv, hacky and not accurate, but necessary
+    echo "movies not supported yet" >&2
+    continue
+  else
+    echo "ERROR: unknown type: $OffloadFile" >&2
+    continue
+  fi
+done < <(
+  cat "$OffloadIndex" |
+    grep -ioP '.*\.(avi|idx|iso|mkv|mp4|mov|srt|sub|ts)([\s]+|)$'
+)
+
+clear_empty_dirs "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
+
+exit 0

@@ -116,11 +116,12 @@ elif [ -d "$torrentpath/$torrentname" ]; then
     ArchiveExt="$(archive_ext "$Archive")"
     if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
       [[ "${Archive#*.}" == part[0-9][0-9].rar ]]; then
+      echo "skipping archive: $Archive" >&2
       continue
     fi
     mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
     archive_unpack "$torrentpath/$torrentname/$Archive" \
-      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")"
+      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
   done
   set -o nounset
   archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"

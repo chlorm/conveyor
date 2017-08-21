@@ -99,7 +99,7 @@ archive_ext() {
   elif [ "${File##*.}" == 'zip' ]; then
     Extension='zip'
   else
-    Log::Message 'error' "unknown archive extension: ${File}"
+    echo "ERROR: unknown archive extension: ${File}" >&2
     return 1
   fi
 
@@ -107,12 +107,15 @@ archive_ext() {
 }
 
 archive_utility() {
-  local -r Type="$1"
+  local -r Archive="$1"
+  local Type
+
+  Type="$(archive_type "$Archive")"
 
   if [ "$Type" == 'rar' ]; then
-    if type 'unrar'; then
+    if type 'unrar' >/dev/null; then
       echo 'unrar'
-    elif type '7za'; then
+    elif type '7za' >/dev/null; then
       echo '7z'
     else
       return 2
@@ -142,12 +145,17 @@ archive_unpack() {
 
   ArchiveUtility="$(archive_utility "$Archive")"
 
+  echo "unpacking: $Archive -> $Destination" >&2
+
   case "$ArchiveUtility" in
     'unrar')
       unrar x -o+ "$Archive" "$Destination"
       ;;
     '7z')
-      echo "not implemented"
+      7z e -r -ao "$Archive" -o "$Destination"
+      ;;
+    *)
+      echo "unknown utility: $ArchiveUtility" >&2
       return 1
       ;;
   esac

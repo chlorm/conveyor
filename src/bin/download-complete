@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!bash
 # Copyright (c) 2017, Cody Opel <codyopel@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,18 +50,21 @@ if [ ! -f "$DOWNLOAD_COMPLETE_LOG_FILE" ]; then
 fi
 
 if [ ! -e "$torrentpath/$torrentname" ]; then
-  echo "torrent does not exist: $torrentpath/$torrentname" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  echo "torrent does not exist: $torrentpath/$torrentname" \
+    >> "$DOWNLOAD_COMPLETE_LOG_FILE"
   exit 1
 fi
 
 # Hard link files to the complete directory
 # FIXME: merge directory and file handling together
 if [ -f "$torrentpath/$torrentname" ]; then
+  # FIXME: unpack top-level archives
   if [ ! -f "$DOWNLOAD_COMPLETE_DIR" ]; then
     mkdir --parents "$DOWNLOAD_COMPLETE_DIR"
   fi
   ln "$torrentpath/$torrentname" "$DOWNLOAD_COMPLETE_DIR/$torrentname" || {
-    echo "failed to link: $torrentpath/$torrentname" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+    echo "failed to link: $torrentpath/$torrentname" \
+      >> "$DOWNLOAD_COMPLETE_LOG_FILE"
     exit 1
   }
 # Directories cannot be hard linked, so iterate over files.
@@ -71,6 +74,9 @@ elif [ -d "$torrentpath/$torrentname" ]; then
       RCLONE_LS_EXTRA_ARGS+=('--exclude' "$DOWNLOAD_COMPLETE_EXCLUDED_REGEX") \
         rc_ls `pwd`
     )
+    mapfile -t ArchivesToUnpack < <(
+      RCLONE_LS_EXTRA_ARGS+=('--include "*.{rar,zip}"')
+    )
   popd
   if [ -z "${FilesToLink[*]}" ]; then
     echo "no files found to link: $torrentpath/$torrentname" \
@@ -78,16 +84,30 @@ elif [ -d "$torrentpath/$torrentname" ]; then
     exit 1
   fi
   for File in "${FilesToLink[@]}"; do
-    mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
+    mkdir --verbose --parents \
+      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
       echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" \
         >> "$DOWNLOAD_COMPLETE_LOG_FILE"
       exit 1
     }
-    ln --verbose "$torrentpath/$torrentname/$File" "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
-      echo "failed to link: $torrentpath/$torrentname/$File" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+    ln --verbose "$torrentpath/$torrentname/$File" \
+      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
+      echo "failed to link: $torrentpath/$torrentname/$File" \
+        >> "$DOWNLOAD_COMPLETE_LOG_FILE"
       exit 1
     }
   done
+  for Archive in "${ArchivesToUnpack[@]}"; do
+    ArchiveExt="$(archive_ext "$Archive")"
+    if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
+      [[ "${Archive#*.}" == part[0-9][0-9].rar ]]; then
+      continue
+    fi
+    mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
+    archive_unpack "$torrentpath/$torrentname/$Archive" \
+      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")"
+  done
+  archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"
 else
   echo "failed to link, not a file or directory: $torrentpath/$torrentname" \
     >> "$DOWNLOAD_COMPLETE_LOG_FILE"

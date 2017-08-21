@@ -112,9 +112,9 @@ archive_utility() {
   local -r Type="$1"
 
   if [ "$Type" == 'rar' ]; then
-    if type 'unrar' 2>&-; then
+    if type 'unrar'; then
       echo 'unrar'
-    elif type '7za' 2>&-; then
+    elif type '7za'; then
       echo '7z'
     else
       return 2
@@ -137,45 +137,47 @@ archive_type() {
   esac
 }
 
+archive_unpack() {
+  local -r Archive="$1"
+  local -r Destination="$2"
+  local ArchiveUtility
+
+  ArchiveUtility="$(archive_utility "$Archive")"
+
+  case "$ArchiveUtility" in
+    'unrar')
+      unrar x -o+ "$Archive" "$Destination"
+      ;;
+    '7z')
+      echo "not implemented"
+      return 1
+      ;;
+  esac
+}
+
 archive_scan() {
-  Function::RequiredArgs '3' "$#"
-  local ArchiveExt
-  local -a ArchiveUnpackMatches
-  local CheckFileDir
-  local CheckForFile
-  local -r File="$1"
-  local Match
-  local -r Regex="$2"
-  local -r RemotePath="$3"
-  local UnpackDir
-
-  UnpackDir="$COMPLETE_DIR/.$RemotePath"
-  Directory::Remove "$UnpackDir"
-  TmpCleanup+=("$UnpackDir")
-  Directory::Create "$UnpackDir"
-
-  archive_unpack "$File" "$UnpackDir"
+  local Archive
+  local -a Archives
+  local -r Dir="$1"
 
   # XXX: fucking scene cunts nest rar archives, *.subs.rar contains
   #      *.idx and *.rar which has the sub file.
-  find "$UnpackDir" \
-    -name '*.rar' \
-    -exec unrar x -o\+ {} "$UnpackDir" \; || :
+  find_archives() {
+    RCLONE_LS_EXTRA_ARGS+=('--include' '*.{rar,zip}') rc_ls "$Dir"
+  }
 
-  mapfile -t ArchiveUnpackMatches < <(find_files "$Regex" "$UnpackDir")
-
-  for Match in "${ArchiveUnpackMatches[@]}"; do
-    # FIXME: make regex negate the following
-    if [[ "$Match" == *"sample.mkv" ]] ||
-       [[ "$Match" == *"sample([0-9]).mkv" ]] ||
-       archive_ext "$Match" 1>&-; then
-      Log::Message 'debug' "Skipping: ${Match}"
-      continue
+  while true; do
+    Archives=()
+    mapfile -t Archives < <(find_archives "$Dir")
+    if [ -n "$Archives[*]" ]; then
+      for Archive in "${Archives[@]}"; do
+        archive_unpack "$Archive" "$(dirname "$Archive")"
+        rm -fv "$Archive"
+      done
+    else
+      break
     fi
-    remote_move_to "$Match" "$RemotePath"
   done
-
-  Directory::Remove "$UnpackDir"
 }
 
 relative_to_complete_dir() {

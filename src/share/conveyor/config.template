@@ -1,6 +1,6 @@
 DOWNLOAD_COMPLETE_DIR="$XDG_DOWNLOAD_DIR/Complete"
 # Case sensitive rclone regex of files to exclude.
-DOWNLOAD_COMPLETE_EXCLUDED_REGEX="*.{[Jj][Pp][Gg],[Jj][Pp][Ee][Gg],[Nn][Ff][Oo],[Pp][Nn][Gg],sample.mkv,sample.mp4,[Ss][Ff][Vv],[Tt][Xx][Tt]}"
+DOWNLOAD_COMPLETE_EXCLUDED_REGEX="*.{[Jj][Pp][Gg],[Jj][Pp][Ee][Gg],[Nn][Ff][Oo],[Pp][Nn][Gg],[Rr][Aa][Rr],[Rr][0-9][0-9],sample.mkv,sample.mp4,[Ss][Ff][Vv],[Tt][Xx][Tt]}"
 DOWNLOAD_COMPLETE_LOG_FILE="$XDG_CONFIG_HOME/conveyor/complete.log"  # FIXME
 DOWNLOAD_DATA_DIR="$XDG_DOWNLOAD_DIR/Data"
 RCLONE_EXTRA_OPTS=(

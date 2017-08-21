@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!bash
 # Copyright (c) 2017, Cody Opel <codyopel@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ set -o pipefail
 
 declare -r PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
 source "$PREFIX/share/conveyor/common.bash"
-source "$PREFIX/share/conveyor/shows.list"
 source "$PREFIX/share/conveyor/associations.list"
 
 if type lib-bash; then
@@ -67,6 +66,19 @@ build_index () {
   set -o nounset
 }
 
+sort_char() {
+  local -r String="$1"
+
+  echo "$String" |
+    # Ignore indefinite articles
+    sed -e 's/^a\s//g' \
+      -e 's/^an\s//g' \
+      -e 's/^the\s//g' |
+    # Negate non-alphanumeric characters
+    sed -e 's/[^[:alnum:]]//g' |
+    cut -c 1
+}
+
 build_remote_path_television() {
   local FormattedTitle
   local -r Title="$1"
@@ -79,14 +91,7 @@ build_remote_path_television() {
   TitleNormalized="$(normalize_string "$Title")"
   echo "$TitleNormalized" >&2
 
-  SortChar="$(
-    echo "$TitleNormalized" |
-      # Ignore indefinite articles
-      sed -e 's/^a\s//g' \
-        -e 's/^an\s//g' \
-        -e 's/^the\s//g' |
-      cut -c 1
-  )"
+  SortChar="$(sort_char "$TitleNormalized")"
 
   set +o nounset
   if [ -n "${AlternateTitles["$TitleNormalized"]}" ]; then
@@ -127,6 +132,19 @@ build_remote_path_television() {
   fi
 
   echo "$SortChar/${TitleAlt2// /.}/season$SeasonPadded/"
+}
+
+build_remote_path_movies() {
+  local -r Title="$1"
+  local -r Year=$2
+  local SortChar
+  local TitleNormalized
+
+  TitleNormalized="$(normalize_string "$Title")"
+
+  SortChar="$(sort_char "$TitleNormalized")"
+
+  echo "$SortChar/${TitleNormalized// /.}_${Year}"
 }
 
 guessit_wrapper() {
@@ -191,6 +209,7 @@ TMP_FILES_LIST+=("$OffloadIndex")
 echo "Building file list..." >&2
 rc_ls "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR" > "$OffloadIndex"
 
+declare -A MovieList=()
 while read OffloadFile; do
   echo "file: $OffloadFile" >&2
 
@@ -224,6 +243,7 @@ while read OffloadFile; do
       echo "f:$GuessitFileTitle, p:$GuessitPathTitle" >&2
     fi
   fi
+  TitleFinal="$GuessitPathTitle"
 
   GuessitPathDateRaw="$(guessit_date_raw "$GuessitPath")"
   build_index MisdetectedTitles
@@ -237,6 +257,11 @@ while read OffloadFile; do
 
   GuessitFileYear="$(guessit_year "$GuessitFile")"
   GuessitPathYear="$(guessit_year "$GuessitPath")"
+  if [ -n "$GuessitFileYear$GuessitPathYear" ]; then
+    # TODO: Disambiguate if year is provided
+    true
+  fi
+  YearFinal="$GuessitPathYear"  # FIXME: validate
 
   GuessitContainer="$(guessit_container "$GuessitFile")"
 
@@ -254,12 +279,6 @@ while read OffloadFile; do
         continue
       fi
     fi
-    if [ -n "$GuessitFileYear$GuessitPathYear" ]; then
-      # TODO: Disambiguate if year is provided
-      true
-    fi
-
-    TitleFinal="$GuessitPathTitle"
     SeasonFinal="$GuessitPathSeason"  # FIXME: make sure is an integer
     echo "sf:$SeasonFinal" >&2
     if [ -z "$SeasonFinal" ]; then
@@ -267,7 +286,6 @@ while read OffloadFile; do
       echo "final:$SeasonFinal" >&2
       continue
     fi
-    YearFinal="$GuessitPathYear"  # FIXME: validate
 
     RemotePath="$(
       build_remote_path_television "$TitleFinal" "$SeasonFinal" "$YearFinal"
@@ -280,13 +298,13 @@ while read OffloadFile; do
   elif [ "$GuessitPathType" == 'movie' ]; then
     if [ -z "$GuessitPathYear$GuessitFileYear" ]; then
       echo "ERROR: year required for type movie" >&2
-      # XXX: for now we could add to a list and at the end iterate over the
-      #      list and ask the user to interactively approve each move.
       continue
     fi
     # TODO: make sure move is not type hdtv, hacky and not accurate, but necessary
-    echo "movies not supported yet" >&2
-    continue
+    # XXX: for now we could add to a list and at the end iterate over the
+    #      list and ask the user to interactively approve each move.
+    RemotePath="$(build_remote_path_movies "$TitleFinal" "$YearFinal")"
+    MovieList+=(["$OffloadFile"]="$RemotePath")
   else
     echo "ERROR: unknown type: $OffloadFile" >&2
     continue
@@ -296,6 +314,22 @@ done < <(
     grep -ioP '.*\.(avi|idx|iso|mkv|mp4|mov|srt|sub|ts)([\s]+|)$'
 )
 
+for Movie in "${!MovieList[@]}"; do
+  Answer=N
+  #if [ "$Input" != 'i' ]; then
+    TargetPath="$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/movies/${MovieList["$Movie"]}/"
+    echo "Move: $Movie -> $TargetPath [y/N]: " >&2
+    read Answer </dev/tty
+  #fi
+  if [ "$Answer" == 'y' ]; then
+    echo -e "\e[32mMoving: $Movie -> $TargetPath\e[0m"
+    rc_move \
+      "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$Movie" \
+      "$TargetPath" || true  # Certain characters are causing errors (maybe parenthese)
+  fi
+done
+
+rclone -v delete --include "*[Ss]ample.{avi,mkv,mp4}" "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
 clear_empty_dirs "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
 
 exit 0

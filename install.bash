@@ -25,10 +25,18 @@ DIR="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")")"
 
 BASH_BIN="$(type -P bash)"
 
-COREUTILS_BIN_DIR
-CURL_BIN_DIR
-FINDUTILS_BIN_DIR
-RCLONE_BIN_DIR
+CONVEYOR_PATHS=(
+  "$(dirname "$(type -P ls)")"
+  "$(dirname "$(type -P curl)")"
+  "$(dirname "$(type -P sed)")"
+  "$(dirname "$(type -P rclone)")"
+  "$PATH"
+)
+
+unset CONVEYOR_PATH
+for Path in "${CONVERYOR_PATHS[@]}"; do
+  CONVEYOR_PATH+="$Path${CONVEYOR_PATH:+:}$CONVEYORPATH"
+done
 
 for bin in "$DIR"/src/bin/*; do
   install -D -m755 -v "$bin" "$PREFIX/bin/$(basename "$bin")" 
@@ -38,4 +46,7 @@ done
 
 for data in "$DIR"/src/share/conveyor/*; do
   install -D -m644 -v "$data" "$PREFIX/share/conveyor/$(basename "$data")"
+  sed -i "$PREFIX/share/conveyor/$(basename "$data")" \
+    -e "s,#PATH#,PATH=\"$CONVEYOR_PATH\","
 done
+

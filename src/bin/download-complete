@@ -97,6 +97,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
     exit 1
   fi
   set -o nounset
+  set +o nounset
   for File in "${FilesToLink[@]}"; do
     mkdir --verbose --parents \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
@@ -109,6 +110,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
       exit 1
     }
   done
+  set -o nounset
   set +o nounset
   for Archive in "${ArchivesToUnpack[@]}"; do
     ArchiveExt="$(archive_ext "$Archive")"

@@ -235,7 +235,7 @@ rc_move() {
   rclone move \
     -v \
     --stats 5s \
-    --transfers 1 \
+    --transfers 10 \
     --low-level-retries 20 \
     --checkers 20 \
     --tpslimit 4 \

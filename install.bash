@@ -31,9 +31,9 @@ FINDUTILS_BIN_DIR
 RCLONE_BIN_DIR
 
 for bin in "$DIR"/src/bin/*; do
-  sed -i "$bin" \
+  install -D -m755 -v "$bin" "$PREFIX/bin/$(basename "$bin")" 
+  sed -i "$PREFIX/bin/$(basename "$bin")" \
     -e "s,^#!bash,#!$BASH_BIN,"
-  install -D -m755 -v "$bin" "$PREFIX/bin/$(basename "$bin")"
 done
 
 for data in "$DIR"/src/share/conveyer/*; do

@@ -25,11 +25,6 @@ declare -r PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")"
 source "$PREFIX/share/conveyor/common.bash"
 source "$PREFIX/share/conveyor/associations.list"
 
-if type lib-bash; then
-  source "$(lib-bash)"
-  trap 'Log::Trace' ERR
-fi
-
 trap 'for i in "${TMP_FILES_LIST[@]}"; do rm -fv "$i" >&2; done' ERR EXIT SIGINT SIGTERM
 declare -a TMP_FILES_LIST=()
 

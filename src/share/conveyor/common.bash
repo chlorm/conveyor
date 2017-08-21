@@ -45,8 +45,6 @@ if [ "$DOWNLOAD_COMPLETE_DIR" == "$DOWNLOAD_DATA_DIR" ]; then
   exit 1
 fi
 
-source "$(lib-bash)"
-
 declare -a -r Vars=(
   DOWNLOAD_COMPLETE_DIR
   DOWNLOAD_DATA_DIR

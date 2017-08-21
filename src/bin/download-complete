@@ -92,7 +92,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
     )
   popd
   set +o nounset
-  if [ -z "${FilesToLink[*]}" ]; then
+  if [ -z "${FilesToLink[*]}${ArchivesToUnpack[*]}" ]; then
     echo "no files found to link: $torrentpath/$torrentname" >&2
     exit 1
   fi

@@ -36,6 +36,6 @@ for bin in "$DIR"/src/bin/*; do
     -e "s,^#!bash,#!$BASH_BIN,"
 done
 
-for data in "$DIR"/src/share/conveyer/*; do
+for data in "$DIR"/src/share/conveyor/*; do
   install -D -m644 -v "$data" "$PREFIX/share/conveyor/$(basename "$data")"
 done

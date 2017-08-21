@@ -212,7 +212,7 @@ rc_ls() {
     --low-level-retries 20 \
     --tpslimit 4 \
     --tpslimit 10 \
-    "${RCLONE_LS_EXTRA_ARGS:-}" \
+    ${RCLONE_LS_EXTRA_ARGS:-} \
     "$Dir" |
     # Print all but the first element (size).
     awk '{$1=""; print $0}' |

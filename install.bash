@@ -34,7 +34,7 @@ CONVEYOR_PATHS=(
 )
 
 unset CONVEYOR_PATH
-for Path in "${CONVERYOR_PATHS[@]}"; do
+for Path in "${CONVEYOR_PATHS[@]}"; do
   CONVEYOR_PATH+="${CONVEYOR_PATH:+:}$Path"
 done
 

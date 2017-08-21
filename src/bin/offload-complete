@@ -45,7 +45,7 @@ while [ true ]; do
 
   # Ignore errors, handled manually for rclone.
   ! rc_move "$DOWNLOAD_COMPLETE_DIR" \
-    "$RCLOME_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR" &
+    "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR" &
   RcloneExit=$?
   RclonePid=$!
   wait $RclonePid

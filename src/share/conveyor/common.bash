@@ -254,7 +254,7 @@ rc_move() {
   local -r TargetDir="$2"
 
   rclone move \
-    -vv \
+    -v \
     --stats 5s \
     --transfers 1 \
     --low-level-retries 20 \

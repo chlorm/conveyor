@@ -27,7 +27,7 @@ if [ -f "$XDG_CONFIG_HOME/user-dirs.dirs" ]; then
 elif [ -f '/etc/xdg/user-dirs.defaults' ]; then
   source '/etc/xdg/user-dirs.defaults'
 fi
-XDG_DOWNLOAD_DIR="${XDG_DOWNLOAD_DIR:-$HOME/.config}"
+XDG_DOWNLOAD_DIR="${XDG_DOWNLOAD_DIR:-$HOME/Download}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_CONFIG_HOME XDG_DATA_HOME XDG_DOWNLOAD_DIR
 

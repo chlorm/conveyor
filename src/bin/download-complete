@@ -75,7 +75,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
         rc_ls `pwd`
     )
     mapfile -t ArchivesToUnpack < <(
-      RCLONE_LS_EXTRA_ARGS+=('--include "*.{rar,zip}"')
+      RCLONE_LS_EXTRA_ARGS+=('--include "*.{rar,zip}"') rc_ls `pwd`
     )
   popd
   if [ -z "${FilesToLink[*]}" ]; then

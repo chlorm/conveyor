@@ -16,7 +16,6 @@
 ################################## Television ##################################
 
 declare -A -r AlternateTitles=(
-  ['2014-']=''
   ['24 legacy']='24-legacy'
   ['amazon with bruce perry']='amazon 2008'
   ['american playboy the hugh hefner story']='american playboy-the hugh hefner story'
@@ -34,6 +33,7 @@ declare -A -r AlternateTitles=(
   ['dinotopia the series']='dinotopia'
   ['degrassi next class']='degrassi-next class'
   ['doctor doctor au']='doctor doctor'
+  ['humans uk']='humans'
   ['pulse au']='pulse 2017'
   # FIXME: test prime suspect 1973
   ['power rangers ninja steel']='power rangers'

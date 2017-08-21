@@ -31,6 +31,16 @@ declare -r torrentid="$1"
 declare -r torrentname="$2"
 declare -r torrentpath="$3"
 
+if [ -z "$DOWNLOAD_COMPLETE_DIR" ]; then
+  echo "DOWNLOAD_COMPLETE_DIR not set" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  exit 1
+fi
+
+if [ -z "$DOWNLOAD_DATA_DIR" ]; then
+  echo "DOWNLOAD_DATA_DIR not set" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  exit 1
+fi
+
 if [ ! -d "$DOWNLOAD_COMPLETE_DIR" ]; then
   mkdir --parents "$DOWNLOAD_COMPLETE_DIR"
 fi

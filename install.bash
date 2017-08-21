@@ -35,7 +35,7 @@ CONVEYOR_PATHS=(
 
 unset CONVEYOR_PATH
 for Path in "${CONVERYOR_PATHS[@]}"; do
-  CONVEYOR_PATH+="$Path${CONVEYOR_PATH:+:}$CONVEYORPATH"
+  CONVEYOR_PATH+="${CONVEYOR_PATH:+:}$Path"
 done
 
 for bin in "$DIR"/src/bin/*; do

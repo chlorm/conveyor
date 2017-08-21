@@ -82,15 +82,15 @@ if [ -f "$torrentpath/$torrentname" ]; then
 elif [ -d "$torrentpath/$torrentname" ]; then
   FilesToLink=()
   ArchivesToUnpack=()
-  pushd "$torrentpath/$torrentname"
-    mapfile -t FilesToLink < <(
-      RCLONE_LS_EXTRA_ARGS="--exclude $DOWNLOAD_COMPLETE_EXCLUDED_REGEX" \
-        rc_ls .
-    )
-    mapfile -t ArchivesToUnpack < <(
-      RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls .
-    )
-  popd
+  cd "$torrentpath/$torrentname"
+  mapfile -t FilesToLink < <(
+    RCLONE_LS_EXTRA_ARGS="--exclude $DOWNLOAD_COMPLETE_EXCLUDED_REGEX" \
+    rc_ls .
+  )
+  mapfile -t ArchivesToUnpack < <(
+    RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls .
+  )
+
   set +o nounset
   if [ -z "${FilesToLink[*]}${ArchivesToUnpack[*]}" ]; then
     echo "no files found to link: $torrentpath/$torrentname" >&2

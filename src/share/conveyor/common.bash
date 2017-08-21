@@ -161,13 +161,15 @@ archive_scan() {
   # XXX: fucking scene cunts nest rar archives, *.subs.rar contains
   #      *.idx and *.rar which has the sub file.
   find_archives() {
-    RCLONE_LS_EXTRA_ARGS+=('--include' '*.{rar,zip}') rc_ls "$Dir"
+    local -r Dir2="$1"
+    RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls "$Dir2"
   }
 
+  set +o nounset
   while true; do
     Archives=()
     mapfile -t Archives < <(find_archives "$Dir")
-    if [ -n "$Archives[*]" ]; then
+    if [ -n "${Archives[*]}" ]; then
       for Archive in "${Archives[@]}"; do
         archive_unpack "$Archive" "$(dirname "$Archive")"
         rm -fv "$Archive"
@@ -176,6 +178,7 @@ archive_scan() {
       break
     fi
   done
+  set -o nounset
 }
 
 relative_to_complete_dir() {
@@ -189,29 +192,6 @@ relative_to_complete_dir() {
 }
 
 tolower() { echo ${@,,} ; }
-
-local_archive_unpack() {
-  local -r File="$1"
-  local -r Destination="$2"
-  local Type
-
-  Type="$(archive_type "$File")"
-
-  Utility="$(archive_utility "$Type")"
-
-  if [ "$Type" == 'rar' ]; then
-    if [ "$Utility" == 'unrar' ]; then
-      unrar x -o+ "$File" "$Destination"
-    elif [ "$Utility" = '7z' ]; then
-      7za e -r -ao "$File" -o "$Destination"
-    else
-      return 1
-    fi
-  else
-    echo "not implemented: $Type" >&2
-    return 1
-  fi
-}
 
 clear_empty_dirs() {
   local -r Dir="$1"
@@ -228,10 +208,11 @@ rc_ls() {
   local -r Dir="$1"
 
   rclone ls \
+    -vv \
     --low-level-retries 20 \
     --tpslimit 4 \
     --tpslimit 10 \
-    "${RCLONE_LS_EXTRA_ARGS[@]}" \
+    "$RCLONE_LS_EXTRA_ARGS:-}" \
     "$Dir" |
     # Print all but the first element (size).
     awk '{$1=""; print $0}' |

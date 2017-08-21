@@ -27,26 +27,29 @@ set -o pipefail
 PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
 source "$PREFIX/share/conveyor/common.bash"
 
+exec > >(tee -ia "$DOWNLOAD_COMPLETE_LOG_FILE")
+exec 2> >(tee -ia "$DOWNLOAD_COMPLETE_LOG_FILE" >&2)
+
 declare -r torrentid="$1"
 declare -r torrentname="$2"
 declare -r torrentpath="$3"
 
 if [ -z "$DOWNLOAD_COMPLETE_DIR" ]; then
-  echo "DOWNLOAD_COMPLETE_DIR not set" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  echo "DOWNLOAD_COMPLETE_DIR not set" >&2
   exit 1
 fi
 
 if [ -z "$DOWNLOAD_DATA_DIR" ]; then
-  echo "DOWNLOAD_DATA_DIR not set" >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  echo "DOWNLOAD_DATA_DIR not set" >&2
   exit 1
 fi
 
 if [ ! -d "$DOWNLOAD_COMPLETE_DIR" ]; then
-  mkdir --parents "$DOWNLOAD_COMPLETE_DIR"
+  mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR"
 fi
 
 if [ ! -d "$DOWNLOAD_DATA_DIR" ]; then
-  mkdir --parents "$DOWNLOAD_DATA_DIR"
+  mkdir --verbose --parents "$DOWNLOAD_DATA_DIR"
 fi
 
 # Make sure not to link the top-level torrent data directory
@@ -60,8 +63,7 @@ if [ ! -f "$DOWNLOAD_COMPLETE_LOG_FILE" ]; then
 fi
 
 if [ ! -e "$torrentpath/$torrentname" ]; then
-  echo "torrent does not exist: $torrentpath/$torrentname" \
-    >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  echo "torrent does not exist: $torrentpath/$torrentname" >&2
   exit 1
 fi
 
@@ -73,40 +75,41 @@ if [ -f "$torrentpath/$torrentname" ]; then
     mkdir --parents "$DOWNLOAD_COMPLETE_DIR"
   fi
   ln "$torrentpath/$torrentname" "$DOWNLOAD_COMPLETE_DIR/$torrentname" || {
-    echo "failed to link: $torrentpath/$torrentname" \
-      >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+    echo "failed to link: $torrentpath/$torrentname" >&2
     exit 1
   }
 # Directories cannot be hard linked, so iterate over files.
 elif [ -d "$torrentpath/$torrentname" ]; then
+  FilesToLink=()
+  ArchivesToUnpack=()
   pushd "$torrentpath/$torrentname"
     mapfile -t FilesToLink < <(
-      RCLONE_LS_EXTRA_ARGS+=('--exclude' "$DOWNLOAD_COMPLETE_EXCLUDED_REGEX") \
-        rc_ls `pwd`
+      RCLONE_LS_EXTRA_ARGS="--exclude $DOWNLOAD_COMPLETE_EXCLUDED_REGEX" \
+        rc_ls .
     )
     mapfile -t ArchivesToUnpack < <(
-      RCLONE_LS_EXTRA_ARGS+=('--include "*.{rar,zip}"') rc_ls `pwd`
+      RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls .
     )
   popd
+  set +o nounset
   if [ -z "${FilesToLink[*]}" ]; then
-    echo "no files found to link: $torrentpath/$torrentname" \
-      >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+    echo "no files found to link: $torrentpath/$torrentname" >&2
     exit 1
   fi
+  set -o nounset
   for File in "${FilesToLink[@]}"; do
     mkdir --verbose --parents \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
-      echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" \
-        >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+      echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
       exit 1
     }
     ln --verbose "$torrentpath/$torrentname/$File" \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
-      echo "failed to link: $torrentpath/$torrentname/$File" \
-        >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+      echo "failed to link: $torrentpath/$torrentname/$File" >&2
       exit 1
     }
   done
+  set +o nounset
   for Archive in "${ArchivesToUnpack[@]}"; do
     ArchiveExt="$(archive_ext "$Archive")"
     if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
@@ -117,10 +120,10 @@ elif [ -d "$torrentpath/$torrentname" ]; then
     archive_unpack "$torrentpath/$torrentname/$Archive" \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")"
   done
+  set -o nounset
   archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"
 else
-  echo "failed to link, not a file or directory: $torrentpath/$torrentname" \
-    >> "$DOWNLOAD_COMPLETE_LOG_FILE"
+  echo "failed to link, not a file or directory: $torrentpath/$torrentname" >&2
   exit 1
 fi
 

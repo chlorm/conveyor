@@ -104,7 +104,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
       echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
       exit 1
     }
-    ln --verbose "$torrentpath/$torrentname/$File" \
+    ln --verbose "$File" \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
       echo "failed to link: $torrentpath/$torrentname/$File" >&2
       exit 1
@@ -120,7 +120,7 @@ elif [ -d "$torrentpath/$torrentname" ]; then
       continue
     fi
     mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
-    archive_unpack "$torrentpath/$torrentname/$Archive" \
+    archive_unpack "$Archive" \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
   done
   set -o nounset

@@ -218,6 +218,7 @@ rc_ls() {
   rclone ls \
     -vv \
     --low-level-retries 20 \
+    --fast-list \
     --tpslimit 4 \
     --tpslimit 10 \
     ${RCLONE_LS_EXTRA_ARGS:-} \

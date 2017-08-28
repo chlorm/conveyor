@@ -189,6 +189,37 @@ archive_scan() {
   set -o nounset
 }
 
+build_index () {
+  local -a Array
+  local i
+  local -r Name="$1"
+  declare -A -g ${Name}Index
+
+  eval Array=("\"\${${Name}[@]}\"")
+
+  set +o nounset
+  for i in "${!Array[@]}"; do
+    eval ${Name}Index["${Array["$i"]}"]="$i"
+  done
+  set -o nounset
+}
+
+normalize_string() {
+  local -r String="$1"
+
+  echo "$String" |
+      tr [A-Z] [a-z] |
+      # Sanitize illegal characters from title
+      sed -e 's/:\s/-/g' \
+        -e 's/\./ /g' \
+        -e "s/'//g" \
+        -e 's/!//g' \
+        -e 's/,//' \
+        -e 's/?//' \
+        -e 's/://' \
+        -e 's/&/and/'
+}
+
 relative_to_complete_dir() {
   Function::RequiredArgs '1' "$#"
   local -r Path="$1"
@@ -197,6 +228,19 @@ relative_to_complete_dir() {
   RelativePath="$(echo "$Path" | sed -e "s,$DOWNLOAD_COMPLETE_DIR/,,")"
 
   echo "$RelativePath"
+}
+
+sort_char() {
+  local -r String="$1"
+
+  echo "$String" |
+    # Ignore indefinite articles
+    sed -e 's/^a\s//g' \
+      -e 's/^an\s//g' \
+      -e 's/^the\s//g' |
+    # Negate non-alphanumeric characters
+    sed -e 's/[^[:alnum:]]//g' |
+    cut -c 1
 }
 
 tolower() { echo ${@,,} ; }

@@ -30,50 +30,6 @@ declare -a TMP_FILES_LIST=()
 
 trap 'exit' ERR SIGINT SIGTERM
 
-normalize_string() {
-  local -r String="$1"
-
-  echo "$String" |
-      tr [A-Z] [a-z] |
-      # Sanitize illegal characters from title
-      sed -e 's/:\s/-/g' \
-        -e 's/\./ /g' \
-        -e "s/'//g" \
-        -e 's/!//g' \
-        -e 's/,//' \
-        -e 's/?//' \
-        -e 's/://' \
-        -e 's/&/and/'
-}
-
-build_index () {
-  local -a Array
-  local i
-  local -r Name="$1"
-  declare -A -g ${Name}Index
-
-  eval Array=("\"\${${Name}[@]}\"")
-
-  set +o nounset
-  for i in "${!Array[@]}"; do
-    eval ${Name}Index["${Array["$i"]}"]="$i"
-  done
-  set -o nounset
-}
-
-sort_char() {
-  local -r String="$1"
-
-  echo "$String" |
-    # Ignore indefinite articles
-    sed -e 's/^a\s//g' \
-      -e 's/^an\s//g' \
-      -e 's/^the\s//g' |
-    # Negate non-alphanumeric characters
-    sed -e 's/[^[:alnum:]]//g' |
-    cut -c 1
-}
-
 build_remote_path_television() {
   local FormattedTitle
   local -r Title="$1"
@@ -210,13 +166,13 @@ while read OffloadFile; do
 
   # Sanitize
   OffloadFileSanitized="$(echo "$OffloadFile" | sed -e 's/^-/\\-/')"
- 
+
   GuessitFile="$(guessit_wrapper "$(basename "$OffloadFileSanitized")")"
   if [ "$(basename "$OffloadFileSanitized")" == "$OffloadFileSanitized" ]; then
     GuessitPath="$GuessitFile"
   else
     GuessitPath="$(guessit_wrapper "$OffloadFileSanitized")"
-  fi 
+  fi
 
   GuessitFileType="$(guessit_type "$GuessitFile")"
   GuessitPathType="$(guessit_type "$GuessitPath")"

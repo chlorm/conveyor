@@ -229,6 +229,23 @@ rc_ls() {
     sed -e 's/^\s\+//' -e 's/\s\+$//' 2>&- || true
 }
 
+rc_lsd() {
+  local -r Dir="$1"
+
+  rclone lsd \
+    -vv \
+    --low-level-retries 20 \
+    --fast-list \
+    --tpslimit 4 \
+    --tpslimit 10 \
+    ${RCLONE_LS_EXTRA_ARGS:-} \
+    "$Dir" |
+    # Print all but the first element (size).
+    awk '{$1="";$2="";$3="";$4=""; print $0}' |
+    # Remove leading/trailing whitespace
+    sed -e 's/^\s\+//' -e 's/\s\+$//' 2>&- || true
+}
+
 rc_mkdir() {
   local -r Dir="$1"
 

@@ -264,7 +264,7 @@ rc_ls() {
     --low-level-retries 20 \
     --fast-list \
     --tpslimit 4 \
-    --tpslimit 10 \
+    --tpslimit-burst 10 \
     ${RCLONE_LS_EXTRA_ARGS:-} \
     "$Dir" |
     # Print all but the first element (size).
@@ -281,7 +281,7 @@ rc_lsd() {
     --low-level-retries 20 \
     --fast-list \
     --tpslimit 4 \
-    --tpslimit 10 \
+    --tpslimit-burst 10 \
     ${RCLONE_LS_EXTRA_ARGS:-} \
     "$Dir" |
     # Print all but the first element (size).

@@ -280,7 +280,4 @@ for Movie in "${!MovieList[@]}"; do
   fi
 done
 
-rclone -v delete --include "*[Ss]ample.{avi,mkv,mp4}" "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
-clear_empty_dirs "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
-
 exit 0

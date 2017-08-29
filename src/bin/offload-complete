@@ -50,12 +50,15 @@ while [ true ]; do
   RclonePid=$!
   wait $RclonePid
 
+  clear_empty_dirs "$DOWNLOAD_COMPLETE_DIR"
+  clear_empty_dirs "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
+  #rclone -v delete --include "*[Ss]ample.{avi,mkv,mp4}" "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"
+
   # FIXME: add logging or addtional error handling
-  if [ $RcloneExit != 0 ]; then
+  if [ $RcloneExit -gt 0 ]; then
     echo "rclone exited with $RcloneExit, sleeping 1h" >&2
     sleep 1h
   else
-    clear_empty_dirs "$DOWNLOAD_COMPLETE_DIR"
     echo "success, sleeping 1h" >&2
     sleep 1h
   fi

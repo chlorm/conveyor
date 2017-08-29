@@ -71,10 +71,10 @@ declare -a FilesToLink=()
 declare -a ArchivesToUnpack=()
 if [ -f "$torrentpath/$torrentname" ]; then
   cd "$torrentpath"
-  if archive_ext "$torrentpath/$torrentname"; then
-    ArchivesToUnpack=("$torrentpath/$torrentname")
+  if archive_ext "$torrentname"; then
+    ArchivesToUnpack=("$torrentname")
   else
-    FilesToLink=("$torrentpath/$torrentname")
+    FilesToLink=("$torrentname")
   fi
 elif [ -d "$torrentpath/$torrentname" ]; then
   cd "$torrentpath/$torrentname"

@@ -67,21 +67,15 @@ if [ ! -e "$torrentpath/$torrentname" ]; then
   exit 1
 fi
 
-# Hard link files to the complete directory
-# FIXME: merge directory and file handling together
+declare -a FilesToLink=()
+declare -a ArchivesToUnpack=()
 if [ -f "$torrentpath/$torrentname" ]; then
-  # FIXME: unpack top-level archives
-  if [ ! -f "$DOWNLOAD_COMPLETE_DIR" ]; then
-    mkdir --parents "$DOWNLOAD_COMPLETE_DIR"
+  if archive_ext "$torrentpath/$torrentname"; then
+    ArchivesToUnpack=("$torrentpath/$torrentname")
+  else
+    FilesToLink=("$torrentpath/$torrentname")
   fi
-  ln "$torrentpath/$torrentname" "$DOWNLOAD_COMPLETE_DIR/$torrentname" || {
-    echo "failed to link: $torrentpath/$torrentname" >&2
-    exit 1
-  }
-# Directories cannot be hard linked, so iterate over files.
 elif [ -d "$torrentpath/$torrentname" ]; then
-  FilesToLink=()
-  ArchivesToUnpack=()
   cd "$torrentpath/$torrentname"
   mapfile -t FilesToLink < <(
     RCLONE_LS_EXTRA_ARGS="--exclude $DOWNLOAD_COMPLETE_EXCLUDED_REGEX" \
@@ -90,44 +84,46 @@ elif [ -d "$torrentpath/$torrentname" ]; then
   mapfile -t ArchivesToUnpack < <(
     RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls .
   )
-
-  set +o nounset
-  if [ -z "${FilesToLink[*]}${ArchivesToUnpack[*]}" ]; then
-    echo "no files found to link: $torrentpath/$torrentname" >&2
-    exit 1
-  fi
-  set -o nounset
-  set +o nounset
-  for File in "${FilesToLink[@]}"; do
-    mkdir --verbose --parents \
-      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
-      echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
-      exit 1
-    }
-    ln --verbose "$File" \
-      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
-      echo "failed to link: $torrentpath/$torrentname/$File" >&2
-      exit 1
-    }
-  done
-  set -o nounset
-  set +o nounset
-  for Archive in "${ArchivesToUnpack[@]}"; do
-    ArchiveExt="$(archive_ext "$Archive")"
-    if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
-      [[ "${Archive#*.}" == part[0-9][0-9].rar ]]; then
-      echo "skipping archive: $Archive" >&2
-      continue
-    fi
-    mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
-    archive_unpack "$Archive" \
-      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
-  done
-  set -o nounset
-  archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"
 else
   echo "failed to link, not a file or directory: $torrentpath/$torrentname" >&2
   exit 1
 fi
+
+
+set +o nounset
+if [ -z "${FilesToLink[*]}${ArchivesToUnpack[*]}" ]; then
+  echo "no files found to link: $torrentpath/$torrentname" >&2
+  exit 1
+fi
+set -o nounset
+set +o nounset
+for File in "${FilesToLink[@]}"; do
+  mkdir --verbose --parents \
+    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
+    echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
+    exit 1
+  }
+  # Hard link files to the complete directory
+  ln --verbose "$File" \
+    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
+    echo "failed to link: $torrentpath/$torrentname/$File" >&2
+    exit 1
+  }
+done
+set -o nounset
+set +o nounset
+for Archive in "${ArchivesToUnpack[@]}"; do
+  ArchiveExt="$(archive_ext "$Archive")"
+  if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
+    [[ "${Archive#*.}" == part[0-9][0-9].rar ]]; then
+    echo "skipping archive: $Archive" >&2
+    continue
+  fi
+  mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
+  archive_unpack "$Archive" \
+    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
+done
+set -o nounset
+archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"
 
 exit 0

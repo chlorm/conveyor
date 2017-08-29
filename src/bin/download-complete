@@ -69,7 +69,9 @@ fi
 
 declare -a FilesToLink=()
 declare -a ArchivesToUnpack=()
+declare IndividualFile=false
 if [ -f "$torrentpath/$torrentname" ]; then
+  IndividualFile=true
   cd "$torrentpath"
   if archive_ext "$torrentname"; then
     ArchivesToUnpack=("$torrentname")
@@ -99,17 +101,19 @@ fi
 set -o nounset
 set +o nounset
 for File in "${FilesToLink[@]}"; do
-  mkdir --verbose --parents \
-    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
-    echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
-    exit 1
-  }
+  if [ ! $IndividualFile ]; then
+    mkdir --verbose --parents \
+      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
+      echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
+      exit 1
+    }
+  fi
   # Hard link files to the complete directory
-  ln --verbose "$File" \
-    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File" || {
-    echo "failed to link: $torrentpath/$torrentname/$File" >&2
-    exit 1
-  }
+  if [ $IndividualFile ]; then
+    ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$File"
+  else
+    ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File"
+  fi
 done
 set -o nounset
 set +o nounset
@@ -120,6 +124,7 @@ for Archive in "${ArchivesToUnpack[@]}"; do
     echo "skipping archive: $Archive" >&2
     continue
   fi
+  # XXX: leave unpack directory creation for individual files
   mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
   archive_unpack "$Archive" \
     "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"

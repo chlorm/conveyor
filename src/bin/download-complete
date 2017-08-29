@@ -70,6 +70,7 @@ fi
 declare -a FilesToLink=()
 declare -a ArchivesToUnpack=()
 if [ -f "$torrentpath/$torrentname" ]; then
+  cd "$torrentpath"
   if archive_ext "$torrentpath/$torrentname"; then
     ArchivesToUnpack=("$torrentpath/$torrentname")
   else

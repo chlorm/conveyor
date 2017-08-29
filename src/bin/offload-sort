@@ -262,7 +262,7 @@ while read OffloadFile; do
   fi
 done < <(
   cat "$OffloadIndex" |
-    grep -ioP '.*\.(avi|idx|iso|mkv|mp4|mov|srt|sub|ts)([\s]+|)$'
+    grep -ioP '.*\.(avi|idx|iso|mkv|mov|mp4|mpg|mpeg|srt|sub|ts)([\s]+|)$'
 )
 
 for Movie in "${!MovieList[@]}"; do

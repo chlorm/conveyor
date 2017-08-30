@@ -204,6 +204,61 @@ build_index () {
   set -o nounset
 }
 
+guessit_wrapper() {
+  local -r Input="$1"
+  local TmpFile
+
+  TmpFile="$(mktemp)"
+  TMP_FILES_LIST+=("$TmpFile")
+
+  guessit --json --advanced --enforce-list "$Input" > "$TmpFile"
+
+  echo "$TmpFile"
+}
+
+# FIXME: currently we only take the first elem returned
+guessit_container() {
+  local -r File="$1"
+
+  jq -r -c -M '.container[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_season() {
+  local -r File="$1"
+
+  jq -r -c -M '.season[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_title() {
+  local -r File="$1"
+
+  jq -r -c -M '.title[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_type() {
+  local -r File="$1"
+
+  jq -r -c -M '.type[0].value' "$File"
+}
+
+guessit_year() {
+  local -r File="$1"
+
+  jq -r -c -M '.year[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_date() {
+  local -r File="$1"
+
+  jq -r -c -M '.date[0]|select(.value != null)|.value' "$File"
+}
+
+guessit_date_raw() {
+  local -r File="$1"
+
+  jq -r -c -M '.date[0]|select(.raw != null)|.raw' "$File"
+}
+
 normalize_string() {
   local -r String="$1"
 

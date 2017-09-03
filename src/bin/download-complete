@@ -101,7 +101,7 @@ fi
 set -o nounset
 set +o nounset
 for File in "${FilesToLink[@]}"; do
-  if [ ! $IndividualFile ]; then
+  if [ "$IndividualFile" == 'false' ]; then
     mkdir --verbose --parents \
       "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
       echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
@@ -109,7 +109,7 @@ for File in "${FilesToLink[@]}"; do
     }
   fi
   # Hard link files to the complete directory
-  if [ $IndividualFile ]; then
+  if [ "$IndividualFile" == 'true' ]; then
     ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$File"
   else
     ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File"

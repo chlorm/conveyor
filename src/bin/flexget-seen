@@ -15,7 +15,9 @@
 
 # Populates flexget's seen list from library.
 
-# TODO: movie support
+# TODO:
+# - movie support
+# - ignore season00 directory and movie equivalents
 
 set -o errexit
 set -o errtrace
@@ -28,28 +30,41 @@ source "$PREFIX/share/conveyor/common.bash"
 
 trap 'exit' ERR SIGINT SIGTERM
 
-#MV_DIR="$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/movies"
-TV_DIR="$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television"
+#declare -r MV_DIR="$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/movies"
+declare -r TV_DIR="$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television"
+# XXX: maybe use flexget directory
+declare -r CACHE="$(pwd)/flexget-seen-cache"
 
-#mapfile -t MOVIE_SORT_DIRS < <(rc_lsd "$MV_DIR")
-mapfile -t TELEVISION_SORT_DIRS < <(rc_lsd "$TV_DIR")
 
-declare -a SHOWS_LIST=()
-for sortchar in "${TELEVISION_SORT_DIRS[@]}"; do
-  SHOW_LIST=()
-  mapfile -t SHOW_LIST < <(rc_lsd "$TV_DIR/$sortchar")
-  for show in "${SHOW_LIST[@]}"; do
-    echo "show: $show" >&2
-    SHOW_FILE_LIST=()
-    mapfile -t SHOW_FILE_LIST < <(rc_ls "$TV_DIR/$sortchar/$show")
-    for showfile in "${SHOW_FILE_LIST[@]}"; do
-      if [[ "${showfile##*.}" == @(avi|mkv|mov|mp4|mpeg|mpg|mov|ts) ]]; then
-        echo "file: $show/$showfile" >&2
-        FileSanitized="$(echo "$show/$showfile" | sed -e 's/^-/\\-/')"
-        Guessit="$(guessit_wrapper "$FileSanitized")"
-        showtitle="$(guessit_title "$Guessit")"
-        flexget series add "$showtitle" "$(basename "$showfile")"
-      fi
-    done
-  done
-done
+if [ ! -d "$CACHE" ]; then
+  echo "Building file list cache..." >&2
+  while read SortChar; do
+    while read ShowTitle; do
+      echo "caching: $ShowTitle"
+      mkdir -p "$CACHE/$SortChar/$ShowTitle"
+      rc_ls "$TV_DIR/$SortChar/$ShowTitle" > "$CACHE/$SortChar/$ShowTitle/list"
+    done < <(rc_lsd "$TV_DIR/$SortChar")
+  done < <(rc_lsd "$TV_DIR")
+fi
+
+while read ListFile; do
+  echo "$(basename "$(dirname "$ListFile")")" >&2
+  while read Item; do
+    if [[ "${Item##*.}" == @(avi|mkv|mov|mp4|mpeg|mpg|mov|ts) ]]; then
+      FileSanitized="$(echo "$(basename "$(dirname "$ListFile")")/$Item" | sed -e 's/^-/\\-/')"
+      Guessit="$(guessit_wrapper "$FileSanitized")"
+      ShowTitle="$(guessit_title "$Guessit")"
+
+      # Flexget commonly returns an error status if there are other blocking
+      # tasks in queue.  Retry until success
+      FlexgetExit=1
+      while [ $FlexgetExit -gt 0 ]; do
+        ! flexget series add "$ShowTitle" "$(basename "$Item")" &
+        FlexgetExit=$?
+        FlexgetPid=$!
+        wait $FlexgetPid
+      done
+    fi
+  done < <(cat "$CACHE/$ListFile")
+  rm -fv "$CACHE/$ListFile"
+done < <(RCLONE_EXTRAS_ARGS='--include "list"' rc_ls "$CACHE")

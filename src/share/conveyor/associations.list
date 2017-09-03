@@ -33,6 +33,8 @@ declare -A -r AlternateTitles=(
   ['dinotopia the series']='dinotopia'
   ['degrassi next class']='degrassi-next class'
   ['doctor doctor au']='doctor doctor'
+  ['dragons riders of berk']='dragons'
+  ['dreamworks dragons']='dragons'
   ['humans uk']='humans'
   ['pulse au']='pulse 2017'
   # FIXME: test prime suspect 1973

@@ -290,9 +290,9 @@ sort_char() {
 
   echo "$String" |
     # Ignore indefinite articles
-    sed -e 's/^a\s//g' \
-      -e 's/^an\s//g' \
-      -e 's/^the\s//g' |
+    sed -e 's/^[Aa]\s//g' \
+      -e 's/^[Aa]n\s//g' \
+      -e 's/^[Tt]he\s//g' |
     # Negate non-alphanumeric characters
     sed -e 's/[^[:alnum:]]//g' |
     cut -c 1

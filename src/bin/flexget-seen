@@ -51,6 +51,10 @@ while read ListFile; do
   echo "$(basename "$(dirname "$ListFile")")" >&2
   while read Item; do
     if [[ "${Item##*.}" == @(avi|mkv|mov|mp4|mpeg|mpg|mov|ts) ]]; then
+      if [ -n "$(grep -oP 'season00/')" ]; then
+        echo "skipping season00" >&2
+        continue
+      fi
       FileSanitized="$(echo "$(basename "$(dirname "$ListFile")")/$Item" | sed -e 's/^-/\\-/')"
       Guessit="$(guessit_wrapper "$FileSanitized")"
       ShowTitle="$(guessit_title "$Guessit")"

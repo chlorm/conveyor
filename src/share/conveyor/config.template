@@ -7,10 +7,13 @@ DOWNLOAD_DATA_DIR="$XDG_DOWNLOAD_DIR/Data"
 RCLONE_EXTRA_OPTS=(
   '-vv'
   '--stats' '5s'
+  '--checkers' '20'
   '--contimeout' '20s'
   '--no-traverse'
   '--low-level-retries' '20'
   '--transfers' '10'
+  '--tpslimit' '4'
+  '--tpslimit-burst' '10'
 )
 RCLONE_LS_EXTRA_ARGS=()
 RCLONE_REMOTE='gd:'

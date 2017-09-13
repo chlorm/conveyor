@@ -358,12 +358,6 @@ rc_move() {
   local -r TargetDir="$2"
 
   rclone move \
-    -v \
-    --stats 5s \
-    --transfers 10 \
-    --low-level-retries 20 \
-    --checkers 20 \
-    --tpslimit 4 \
-    --tpslimit-burst 10 \
+    "${RCLONE_EXTRA_OPTS[@]}" \
     "$SourceDir" "$TargetDir"
 }

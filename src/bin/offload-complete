@@ -27,14 +27,14 @@ source "$PREFIX/share/conveyor/common.bash"
 trap 'kill -9 $RclonePid 2>&-; exit' SIGINT SIGTERM
 
 while [ true ]; do
-  clear_empty_dirs "$DOWNLOAD_COMPLETE_DIR"
-
   # The directory cleanup also removes $DOWNLOAD_COMPLETE_DIR if it is empty
   if [ ! -d "$DOWNLOAD_COMPLETE_DIR" ]; then
     echo 'no directory, sleeping 1h' >&2
     sleep 1h
     continue
   fi
+
+  clear_empty_dirs "$DOWNLOAD_COMPLETE_DIR"
 
   TestEmpty="$(find "$DOWNLOAD_COMPLETE_DIR" -type f || true)"
   if [ -z "$TestEmpty" ]; then

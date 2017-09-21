@@ -16,7 +16,10 @@
 # Hard links downloads on completion from the data directory to the complete directory.
 
 # FIXME: only hard link files from DOWNLOAD_DATA_DIR, ignore other source locations.
-# TODO: unpack archive files rather than hard linking
+# TODO: hardlink all torrentfiles containing archives to a temp directory and
+#       then continue processing files to complete directory, prevents losing
+#       data if torrent is removed while unpacking.
+# TODO: add case for password protected archives
 
 set -o errexit
 set -o errtrace

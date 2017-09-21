@@ -179,8 +179,10 @@ archive_scan() {
     mapfile -t Archives < <(find_archives "$Dir")
     if [ -n "${Archives[*]}" ]; then
       for Archive in "${Archives[@]}"; do
+        pushd "$Dir"
         archive_unpack "$Archive" "$(dirname "$Archive")"
         rm -fv "$Archive"
+        popd
       done
     else
       break

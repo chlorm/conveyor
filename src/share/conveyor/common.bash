@@ -60,6 +60,20 @@ for Var in "${Vars[@]}"; do
   fi
 done
 
+declare -a -r Bins=(
+  awk
+  grep
+  guessit
+  jq
+  rclone
+  sed
+)
+for Bin in "${Bins[@]}"; do
+  if ! type $Bin >/dev/null; then
+    echo "ERROR: required executable not found: $Bin" >&2
+    exit 1
+  fi
+done
 
 
 # FIXME: add to lib-bash

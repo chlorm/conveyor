@@ -163,7 +163,7 @@ archive_unpack() {
 
   case "$ArchiveUtility" in
     'unrar')
-      unrar x -o+ "$Archive" "$Destination"
+      unrar x -p- -o+ "$Archive" "$Destination"
       ;;
     '7z')
       7z e -r -ao "$Archive" -o "$Destination"

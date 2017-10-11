@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Hard links downloads on completion from the data directory to the complete directory.
+# Hard links downloads on completion from the data directory to the process directory.
 
 # FIXME: only hard link files from DOWNLOAD_DATA_DIR, ignore other source locations.
 # TODO: hardlink all torrentfiles containing archives to a temp directory and
@@ -37,8 +37,8 @@ declare -r torrentid="$1"
 declare -r torrentname="$2"
 declare -r torrentpath="$3"
 
-if [ -z "$DOWNLOAD_COMPLETE_DIR" ]; then
-  echo "DOWNLOAD_COMPLETE_DIR not set" >&2
+if [ -z "$DOWNLOAD_PROCESS_DIR" ]; then
+  echo "DOWNLOAD_PROCESS_DIR not set" >&2
   exit 1
 fi
 
@@ -47,8 +47,8 @@ if [ -z "$DOWNLOAD_DATA_DIR" ]; then
   exit 1
 fi
 
-if [ ! -d "$DOWNLOAD_COMPLETE_DIR" ]; then
-  mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR"
+if [ ! -d "$DOWNLOAD_PROCESS_DIR" ]; then
+  mkdir --verbose --parents "$DOWNLOAD_PROCESS_DIR"
 fi
 
 if [ ! -d "$DOWNLOAD_DATA_DIR" ]; then
@@ -57,7 +57,7 @@ fi
 
 # Make sure not to link the top-level torrent data directory
 # FIXME: assumes a fixed directory structure
-if [ "$DOWNLOAD_COMPLETE_DIR/$(basename "$DOWNLOAD_DATA_DIR")" == "$DOWNLOAD_COMPLETE_DIR/$(basename "$torrentpath/$torrentname")" ]; then
+if [ "$DOWNLOAD_PROCESS_DIR/$(basename "$DOWNLOAD_DATA_DIR")" == "$DOWNLOAD_PROCESS_DIR/$(basename "$torrentpath/$torrentname")" ]; then
   exit 0
 fi
 
@@ -71,33 +71,21 @@ if [ ! -e "$torrentpath/$torrentname" ]; then
 fi
 
 declare -a FilesToLink=()
-declare -a ArchivesToUnpack=()
 declare IndividualFile=false
 if [ -f "$torrentpath/$torrentname" ]; then
   IndividualFile=true
   cd "$torrentpath"
-  if archive_ext "$torrentname"; then
-    ArchivesToUnpack=("$torrentname")
-  else
-    FilesToLink=("$torrentname")
-  fi
+  FilesToLink=("$torrentname")
 elif [ -d "$torrentpath/$torrentname" ]; then
   cd "$torrentpath/$torrentname"
-  mapfile -t FilesToLink < <(
-    RCLONE_LS_EXTRA_ARGS="--exclude $DOWNLOAD_COMPLETE_EXCLUDED_REGEX" \
-    rc_ls .
-  )
-  mapfile -t ArchivesToUnpack < <(
-    RCLONE_LS_EXTRA_ARGS='--include *.{rar,zip}' rc_ls .
-  )
+  mapfile -t FilesToLink < <(rc_ls .)
 else
   echo "failed to link, not a file or directory: $torrentpath/$torrentname" >&2
   exit 1
 fi
 
-
 set +o nounset
-if [ -z "${FilesToLink[*]}${ArchivesToUnpack[*]}" ]; then
+if [ -z "${FilesToLink[*]}" ]; then
   echo "no files found to link: $torrentpath/$torrentname" >&2
   exit 1
 fi
@@ -106,33 +94,18 @@ set +o nounset
 for File in "${FilesToLink[@]}"; do
   if [ "$IndividualFile" == 'false' ]; then
     mkdir --verbose --parents \
-      "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" || {
-      echo "failed to create directory: $DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$File")" >&2
+      "$DOWNLOAD_PROCESS_DIR/$torrentname/$(dirname "$File")" || {
+      echo "failed to create directory: $DOWNLOAD_PROCESS_DIR/$torrentname/$(dirname "$File")" >&2
       exit 1
     }
   fi
   # Hard link files to the complete directory
   if [ "$IndividualFile" == 'true' ]; then
-    ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$File"
+    ln --verbose "$File" "$DOWNLOAD_PROCESS_DIR/$File"
   else
-    ln --verbose "$File" "$DOWNLOAD_COMPLETE_DIR/$torrentname/$File"
+    ln --verbose "$File" "$DOWNLOAD_PROCESS_DIR/$torrentname/$File"
   fi
 done
 set -o nounset
-set +o nounset
-for Archive in "${ArchivesToUnpack[@]}"; do
-  ArchiveExt="$(archive_ext "$Archive")"
-  if [ "$ArchiveExt" != 'part01.rar' ] && [ "$ArchiveExt" == 'rar' ] && \
-    [[ "${Archive#*.}" == part[0-9][0-9].rar ]]; then
-    echo "skipping archive: $Archive" >&2
-    continue
-  fi
-  # XXX: leave unpack directory creation for individual files
-  mkdir --verbose --parents "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
-  archive_unpack "$Archive" \
-    "$DOWNLOAD_COMPLETE_DIR/$torrentname/$(dirname "$Archive")"
-done
-set -o nounset
-archive_scan "$DOWNLOAD_COMPLETE_DIR/$torrentname/"
 
 exit 0

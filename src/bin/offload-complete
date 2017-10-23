@@ -43,12 +43,26 @@ while [ true ]; do
     continue
   fi
 
-  # Ignore errors, handled manually for rclone.
-  ! rc_move "$DOWNLOAD_COMPLETE_DIR" \
-    "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR" &
-  RcloneExit=$?
-  RclonePid=$!
-  wait $RclonePid
+  # Chunks offloads by top-level file or directory in $DOWNLOAD_COMPLETE_DIR
+  # FIXME: replace find with rclone
+  for Download in `find "$DOWNLOAD_COMPLETE_DIR" -maxdepth 1 -printf '%P\n'`; do
+    Files=()
+    if [ -d "$Download" ]; then
+      mapfile -t Files < <(rc_ls "$DOWNLOAD_COMPLETE_DIR/$Download/")
+      Download="$Download/"
+    else
+      Files=("$Download")
+      Download=
+    fi
+    for File in "${Files[@]}"; do
+      # Ignore errors, handled manually for rclone.
+      ! rc_move "$DOWNLOAD_COMPLETE_DIR/$Dir$File" \
+        "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$Dir" &
+      RcloneExit=$?
+      RclonePid=$!
+      wait $RclonePid
+    done
+  done
 
   clear_empty_dirs "$DOWNLOAD_COMPLETE_DIR"
   clear_empty_dirs "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR"

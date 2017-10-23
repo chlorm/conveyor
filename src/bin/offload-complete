@@ -56,8 +56,8 @@ while [ true ]; do
     fi
     for File in "${Files[@]}"; do
       # Ignore errors, handled manually for rclone.
-      ! rc_move "$DOWNLOAD_COMPLETE_DIR/$Dir$File" \
-        "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$Dir" &
+      ! rc_move "$DOWNLOAD_COMPLETE_DIR/$Download$File" \
+        "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$Download" &
       RcloneExit=$?
       RclonePid=$!
       wait $RclonePid

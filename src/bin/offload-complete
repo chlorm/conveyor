@@ -43,9 +43,11 @@ while [ true ]; do
     continue
   fi
 
+  # FIXME: replace find with rclone somehow
+  mapfile -t Downloads < <(find "$DOWNLOAD_COMPLETE_DIR" -maxdepth 1 -printf '%P\n')
+
   # Chunks offloads by top-level file or directory in $DOWNLOAD_COMPLETE_DIR
-  # FIXME: replace find with rclone
-  for Download in `find "$DOWNLOAD_COMPLETE_DIR" -maxdepth 1 -printf '%P\n'`; do
+  for Download in "${Downloads[@]}"; do
     Files=()
     if [ -d "$Download" ]; then
       mapfile -t Files < <(rc_ls "$DOWNLOAD_COMPLETE_DIR/$Download/")
@@ -55,6 +57,10 @@ while [ true ]; do
       Download=
     fi
     for File in "${Files[@]}"; do
+      # Incase file was removed after starting, prevent errors
+      if [ ! -e "$DOWNLOAD_COMPLETE_DIR/$Download$File" ]; then
+        continue
+      fi
       # Ignore errors, handled manually for rclone.
       ! rc_move "$DOWNLOAD_COMPLETE_DIR/$Download$File" \
         "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$Download" &

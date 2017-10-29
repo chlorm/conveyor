@@ -161,12 +161,16 @@ archive_unpack() {
 
   echo "unpacking: $Archive -> $Destination" >&2
 
+  if [ ! -d "$Destination" ]; then
+    mkdir -pv "$Destination"
+  fi
+
   case "$ArchiveUtility" in
     'unrar')
-      unrar x -p- -o+ "$Archive" "$Destination"
+      unrar x -p- -o+ "$Archive" "$Destination" || true
       ;;
     '7z')
-      7z e -r -ao "$Archive" -o "$Destination"
+      7z e -r -ao "$Archive" -o "$Destination" || true
       ;;
     *)
       echo "unknown utility: $ArchiveUtility" >&2
@@ -178,7 +182,8 @@ archive_unpack() {
 archive_scan() {
   local Archive
   local -a Archives
-  local -r Dir="$1"
+  local -r DirSource="$1"
+  local -r DirTarget="$2"
 
   # XXX: fucking scene cunts nest rar archives, *.subs.rar contains
   #      *.idx and *.rar which has the sub file.
@@ -190,12 +195,14 @@ archive_scan() {
   set +o nounset
   while true; do
     Archives=()
-    mapfile -t Archives < <(find_archives "$Dir")
+    mapfile -t Archives < <(find_archives "$DirSource")
     if [ -n "${Archives[*]}" ]; then
       for Archive in "${Archives[@]}"; do
-        pushd "$Dir"
-        archive_unpack "$Archive" "$(dirname "$Archive")"
-        rm -fv "$Archive"
+        pushd "$DirSource"
+          archive_unpack "$Archive" "$DirTarget/$(dirname "$Archive")"
+          rm -v "$Archive"
+          rm -v "$(dirname "$Archive")/$(basename "$Archive").r"[0-9][0-9] || true
+          rm -v "$(dirname "$Archive")/$(basename "$Archive").part"[0-9][0-9]".rar" || true
         popd
       done
     else

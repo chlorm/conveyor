@@ -302,7 +302,8 @@ relative_to_complete_dir() {
 }
 
 sort_char() {
-  local -r String="$1"
+  local -r NumChars=$1
+  local -r String="$2"
 
   echo "$String" |
     # Ignore indefinite articles
@@ -311,7 +312,7 @@ sort_char() {
       -e 's/^[Tt]he\s//g' |
     # Negate non-alphanumeric characters
     sed -e 's/[^[:alnum:]]//g' |
-    cut -c 1
+    cut -c 1-$NumChars
 }
 
 tolower() { echo ${@,,} ; }

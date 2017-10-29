@@ -35,14 +35,16 @@ build_remote_path_television() {
   local -r Title="$1"
   local -r Season=$2
   local SeasonPadded
-  local SortChar
+  local SortChar1
+  local SortChar2
   local TitleAlt TitleAlt2
   local -r Year=$3
 
   TitleNormalized="$(normalize_string "$Title")"
   echo "$TitleNormalized" >&2
 
-  SortChar="$(sort_char "$TitleNormalized")"
+  SortChar1="$(sort_char 1 "$TitleNormalized")"
+  SortChar2="$(sort_char 2 "$TitleNormalized")"
 
   set +o nounset
   if [ -n "${AlternateTitles["$TitleNormalized"]}" ]; then
@@ -82,20 +84,21 @@ build_remote_path_television() {
     SeasonPadded=$Season
   fi
 
-  echo "$SortChar/${TitleAlt2// /.}/season$SeasonPadded/"
+  echo "$SortChar1/$SortChar2/${TitleAlt2// /.}/season$SeasonPadded/"
 }
 
 build_remote_path_movies() {
   local -r Title="$1"
   local -r Year=$2
-  local SortChar
+  local SortChar1
   local TitleNormalized
 
   TitleNormalized="$(normalize_string "$Title")"
 
-  SortChar="$(sort_char "$TitleNormalized")"
+  SortChar1="$(sort_char 1 "$TitleNormalized")"
+  SortChar2="$(sort_char 2 "$TitleNormalized")"
 
-  echo "$SortChar/${TitleNormalized// /.}_${Year}"
+  echo "$SortChar1/$SortChar2/${TitleNormalized// /.}_${Year}"
 }
 
 ################################################################################
@@ -187,10 +190,10 @@ while read OffloadFile; do
       build_remote_path_television "$TitleFinal" "$SeasonFinal" "$YearFinal"
     )"
 
-    echo -e "\e[32mMoving: $OffloadFile -> $RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television/$RemotePath\e[0m" >&2
+    echo -e "\e[32mMoving: $OffloadFile -> $RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/tv/$RemotePath\e[0m" >&2
     rc_move \
       "$RCLONE_REMOTE/$RCLONE_REMOTE_OFFLOAD_DIR/$OffloadFile" \
-      "$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/television/$RemotePath"
+      "$RCLONE_REMOTE/$RCLONE_REMOTE_SORTED_DIR/tv/$RemotePath"
   elif [ "$GuessitPathType" == 'movie' ]; then
     if [ -z "$GuessitPathYear$GuessitFileYear" ]; then
       echo "ERROR: year required for type movie" >&2

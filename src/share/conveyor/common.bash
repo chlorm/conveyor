@@ -286,16 +286,18 @@ normalize_string() {
   local -r String="$1"
 
   echo "$String" |
-      tr [A-Z] [a-z] |
-      # Sanitize illegal characters from title
-      sed -e 's/:\s/-/g' \
-        -e 's/\./ /g' \
-        -e "s/'//g" \
-        -e 's/!//g' \
-        -e 's/,//' \
-        -e 's/?//' \
-        -e 's/://' \
-        -e 's/&/and/'
+    # Non-breaking space -> space
+    # XXX: need test sources to find issues with iconv illegal characters
+    sed -e 's/\xC2\xA0/\x20/g' |
+    iconv -f utf-8 -t us-ascii//translit |
+    tr [A-Z] [a-z] |
+    # Sanitize illegal characters from title
+    sed -e 's/:\s/-/g' \
+      -e 's/^ \+//' \
+      -e 's/ \+$//' \
+      -e 's/\./ /g' \
+      -e 's/&/and/g' \
+      -e 's/[^a-zA-Z0-9_ -]//g'  # Catch-all for illegal/non-printable characters
 }
 
 relative_to_complete_dir() {

@@ -49,7 +49,7 @@ while [ true ]; do
   # Chunks offloads by top-level file or directory in $DOWNLOAD_COMPLETE_DIR
   for Download in "${Downloads[@]}"; do
     Files=()
-    if [ -d "$Download" ]; then
+    if [ -d "$DOWNLOAD_COMPLETE_DIR/$Download" ]; then
       mapfile -t Files < <(rc_ls "$DOWNLOAD_COMPLETE_DIR/$Download/")
       Download="$Download/"
     else

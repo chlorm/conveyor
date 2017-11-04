@@ -19,6 +19,9 @@ set -o functrace
 set -o nounset
 set -o pipefail
 
+# Hardcodes prefixs of all dependencies.
+#PATH#
+
 PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
 source "$PREFIX/share/conveyor/common.bash"
 
@@ -56,4 +59,3 @@ for i in {1..45}; do
 done
 
 exit 0
-

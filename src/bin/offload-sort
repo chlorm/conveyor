@@ -21,6 +21,9 @@ set -o functrace
 set -o nounset
 set -o pipefail
 
+# Hardcodes prefixs of all dependencies.
+#PATH#
+
 declare -r PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
 source "$PREFIX/share/conveyor/common.bash"
 source "$PREFIX/share/conveyor/associations.list"

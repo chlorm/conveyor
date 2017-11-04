@@ -67,11 +67,10 @@ done
 for bin in "$DIR"/src/bin/*; do
   install -D -m755 -v "$bin" "$PREFIX/bin/$(basename "$bin")"
   sed -i "$PREFIX/bin/$(basename "$bin")" \
-    -e "s,^#!bash,#!$BASH_BIN,"
+    -e "s,^#!bash,#!$BASH_BIN," \
+    -e "s,#PATH#,PATH=\"$CONVEYOR_PATH\","
 done
 
 for data in "$DIR"/src/share/conveyor/*; do
   install -D -m644 -v "$data" "$PREFIX/share/conveyor/$(basename "$data")"
-  sed -i "$PREFIX/share/conveyor/$(basename "$data")" \
-    -e "s,#PATH#,PATH=\"$CONVEYOR_PATH\","
 done

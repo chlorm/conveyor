@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Hardcodes prefixs of all dependencies.
-#PATH#
-
 #deluge-console -c /home35/jackal/.config/deluge/ "connect 5.79.67.48:21096 jackal DgVlV6HtNqW; info 30435a5872d07b226051516949bb04b1bfcfaf5a"
 
 # XXX: tpslimit is purposely set fairly low to prevent sending to many

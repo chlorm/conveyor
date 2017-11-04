@@ -6,7 +6,7 @@ Download automation.
 ### Dependencies:
 
 - coreutils
-- findutils (will be removed)
+- findutils
 - gnuawk
 - gnugrep (w/ pcre) (will be removed)
 - gnused

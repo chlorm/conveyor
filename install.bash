@@ -31,31 +31,41 @@ DIR="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")")"
 
 BASH_BIN="$(type -P bash)"
 
+declare -a REQUIRED_UTILS=(
+  7z
+  awk
+  curl
+  cut
+  dirname
+  find
+  flexget
+  grep
+  guessit
+  iconv
+  install
+  ln
+  mkdir
+  mktemp
+  rclone
+  readlink
+  rm
+  sed
+  sleep
+  sort
+  tee
+  touch
+  tr
+  uniq
+)
+
 declare -a CONVEYOR_PATHS=()
-CONVEYOR_PATHS+=("$(dirname "$(type -P 7z)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P awk)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P curl)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P cut)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P dirname)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P find)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P flexget)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P grep)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P guessit)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P iconv)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P install)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P ln)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P mkdir)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P mktemp)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P rclone)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P readlink)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P rm)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P sed)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P sleep)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P sort)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P tee)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P touch)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P tr)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P uniq)")")
+for requiredutil in "${REQUIRED_UTILS[@]}"; do
+  if ! type $requiredutil >/dev/null; then
+    echo "$requiredutil not found" >&2
+    exit 1
+  fi
+  CONVEYOR_PATHS+=("$(dirname "$(type -P "$requiredutil")")")
+done
 
 # Filter out duplicate prefixes
 mapfile -t CONVERYOR_PATHS_FILTERED < <(

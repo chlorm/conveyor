@@ -82,8 +82,6 @@ declare -a -r Bins=(
   touch
   tr
   uniq
-  unrar
-  unzip
 )
 for Bin in "${Bins[@]}"; do
   if ! type $Bin >/dev/null; then
@@ -137,25 +135,6 @@ archive_ext() {
   echo "$Extension"
 }
 
-archive_utility() {
-  local -r Archive="$1"
-  local Type
-
-  Type="$(archive_type "$Archive")"
-
-  if [ "$Type" == 'rar' ]; then
-    if type 'unrar' >/dev/null; then
-      echo 'unrar'
-    elif type '7za' >/dev/null; then
-      echo '7z'
-    else
-      return 2
-    fi
-  else
-    return 1
-  fi
-}
-
 archive_type() {
   local Extension
   local -r File="$1"
@@ -182,18 +161,7 @@ archive_unpack() {
     mkdir -pv "$Destination"
   fi
 
-  case "$ArchiveUtility" in
-    'unrar')
-      unrar x -p- -o+ "$Archive" "$Destination" || true
-      ;;
-    '7z')
-      7z e -r -ao "$Archive" -o "$Destination" || true
-      ;;
-    *)
-      echo "unknown utility: $ArchiveUtility" >&2
-      return 1
-      ;;
-  esac
+  7z e -r -aoa "$Archive" -o"$Destination" || true
 }
 
 archive_scan() {

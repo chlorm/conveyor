@@ -32,7 +32,7 @@ DIR="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")")"
 BASH_BIN="$(type -P bash)"
 
 declare -a CONVEYOR_PATHS=()
-CONVEYOR_PATHS+=("$(dirname "$(type -P 7z 2>&-)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P 7z)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P awk)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P curl)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P cut)")")
@@ -56,8 +56,6 @@ CONVEYOR_PATHS+=("$(dirname "$(type -P tee)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P touch)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P tr)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P uniq)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P unrar 2>&-)")")
-CONVEYOR_PATHS+=("$(dirname "$(type -P unzip 2>&-)")")
 
 # Filter out duplicate prefixes
 mapfile -t CONVERYOR_PATHS_FILTERED < <(

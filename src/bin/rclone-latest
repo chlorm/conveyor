@@ -29,7 +29,7 @@ source "$PREFIX/share/conveyor/common.bash"
 curl -O 'https://beta.rclone.org/rclone-beta-latest-linux-amd64.zip'
 
 # FIXME: unzip into tmp directory
-unzip 'rclone-beta-latest-linux-amd64.zip'
+archive_unpack 'rclone-beta-latest-linux-amd64.zip' "$(pwd)"
 
 # FIXME: use install, and better matching
 cp rclone-v*-linux-amd64/rclone "$PREFIX/bin"

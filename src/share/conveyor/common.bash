@@ -293,6 +293,7 @@ normalize_string() {
     tr [A-Z] [a-z] |
     # Sanitize illegal characters from title
     sed -e 's/:\s/-/g' \
+      -e 's/\s-\s/-/' \
       -e 's/^ \+//' \
       -e 's/ \+$//' \
       -e 's/\./ /g' \
@@ -319,6 +320,7 @@ sort_char() {
     sed -e 's/^[Aa]\s//g' \
       -e 's/^[Aa]n\s//g' \
       -e 's/^[Tt]he\s//g' |
+    sed -e 's/_[1-2][0-9][0-9][0-9]$//' |
     # Negate non-alphanumeric characters
     sed -e 's/[^[:alnum:]]//g' |
     cut -c 1-$NumChars

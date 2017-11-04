@@ -61,13 +61,31 @@ for Var in "${Vars[@]}"; do
 done
 
 declare -a -r Bins=(
+  7z
   awk
+  curl
+  cut
+  dirname
   find
+  flexget
   grep
   guessit
-  jq
+  iconv
+  ln
+  mkdir
+  mktemp
   rclone
+  readlink
+  rm
   sed
+  sleep
+  sort
+  tee
+  touch
+  tr
+  uniq
+  unrar
+  unzip
 )
 for Bin in "${Bins[@]}"; do
   if ! type $Bin >/dev/null; then

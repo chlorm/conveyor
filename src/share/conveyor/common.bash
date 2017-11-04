@@ -62,6 +62,7 @@ done
 
 declare -a -r Bins=(
   awk
+  find
   grep
   guessit
   jq

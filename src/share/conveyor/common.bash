@@ -71,6 +71,7 @@ declare -a -r Bins=(
   grep
   guessit
   iconv
+  install
   ln
   mkdir
   mktemp

@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 if [ "$XDG_DATA_HOME" != "$HOME/.local/share" ]; then
   echo "non standard XDG_DATA_HOME, you must explicitly set PREFIX" >&2
@@ -25,33 +31,33 @@ DIR="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")")"
 
 BASH_BIN="$(type -P bash)"
 
-CONVEYOR_PATHS=(
-  "$(dirname "$(type -P 7z 2>&-)")"
-  "$(dirname "$(type -P awk 2>&-)")"
-  "$(dirname "$(type -P curl 2>&-)")"
-  "$(dirname "$(type -P cut 2>&-)")"
-  "$(dirname "$(type -P dirname 2>&-)")"
-  "$(dirname "$(type -P find 2>&-)")"
-  "$(dirname "$(type -P flexget 2>&-)")"
-  "$(dirname "$(type -P grep 2>&-)")"
-  "$(dirname "$(type -P guessit 2>&-)")"
-  "$(dirname "$(type -P iconv 2>&-)")"
-  "$(dirname "$(type -P ln 2>&-)")"
-  "$(dirname "$(type -P mkdir 2>&-)")"
-  "$(dirname "$(type -P mktemp 2>&-)")"
-  "$(dirname "$(type -P rclone 2>&-)")"
-  "$(dirname "$(type -P readlink 2>&-)")"
-  "$(dirname "$(type -P rm 2>&-)")"
-  "$(dirname "$(type -P sed 2>&-)")"
-  "$(dirname "$(type -P sleep 2>&-)")"
-  "$(dirname "$(type -P sort 2>&-)")"
-  "$(dirname "$(type -P tee 2>&-)")"
-  "$(dirname "$(type -P touch 2>&-)")"
-  "$(dirname "$(type -P tr 2>&-)")"
-  "$(dirname "$(type -P uniq 2>&-)")"
-  "$(dirname "$(type -P unrar 2>&-)")"
-  "$(dirname "$(type -P unzip 2>&-)")"
-)
+declare -a CONVEYOR_PATHS=()
+CONVEYOR_PATHS+=("$(dirname "$(type -P 7z 2>&-)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P awk)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P curl)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P cut)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P dirname)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P find)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P flexget)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P grep)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P guessit)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P iconv)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P install)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P ln)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P mkdir)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P mktemp)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P rclone)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P readlink)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P rm)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P sed)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P sleep)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P sort)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P tee)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P touch)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P tr)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P uniq)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P unrar 2>&-)")")
+CONVEYOR_PATHS+=("$(dirname "$(type -P unzip 2>&-)")")
 
 unset CONVEYOR_PATH
 for Path in "${CONVEYOR_PATHS[@]}"; do

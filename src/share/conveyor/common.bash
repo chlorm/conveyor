@@ -376,16 +376,25 @@ rc_lsd() {
 rc_mkdir() {
   local -r Dir="$1"
 
-  rclone mkdir -vv --low-level-retries 20 "$Dir"
+  rclone mkdir \
+    -vv \
+    --low-level-retries 20 \
+    --fast-list \
+    --tpslimit 4 \
+    --tpslimit-burst 10 \
+    "$Dir"
 }
 
-# XXX: rclone move does not yet support moving files accross filesystem
-#      boundaries.  Maybe use copy, then delete source.
 rc_move() {
   local -r SourceDir="$1"
   local -r TargetDir="$2"
 
   rclone move \
+    -vv \
+    --low-level-retries 20 \
+    --fast-list \
+    --tpslimit 4 \
+    --tpslimit-burst 10 \
     "${RCLONE_EXTRA_OPTS[@]}" \
     "$SourceDir" "$TargetDir"
 }

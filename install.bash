@@ -59,8 +59,13 @@ CONVEYOR_PATHS+=("$(dirname "$(type -P uniq)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P unrar 2>&-)")")
 CONVEYOR_PATHS+=("$(dirname "$(type -P unzip 2>&-)")")
 
+# Filter out duplicate prefixes
+mapfile -t CONVERYOR_PATHS_FILTERED < <(
+  printf '%s\n' "${CONVEYOR_PATHS[@]}" | sort -u
+)
+
 unset CONVEYOR_PATH
-for Path in "${CONVEYOR_PATHS[@]}"; do
+for Path in "${CONVERYOR_PATHS_FILTERED[@]}"; do
   CONVEYOR_PATH+="${CONVEYOR_PATH:+:}$Path"
 done
 

@@ -32,7 +32,7 @@ DIR="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")")"
 BASH_BIN="$(type -P bash)"
 
 declare -a REQUIRED_UTILS=(
-  7z
+  7za
   awk
   curl
   cut

@@ -58,7 +58,7 @@ for Var in "${Vars[@]}"; do
 done
 
 declare -a -r Bins=(
-  7z
+  7za
   awk
   curl
   cut
@@ -161,7 +161,7 @@ archive_unpack() {
     mkdir -pv "$Destination"
   fi
 
-  7z e -r -aoa "$Archive" -o"$Destination" || true
+  7za e -r -aoa "$Archive" -o"$Destination" || true
 }
 
 archive_scan() {

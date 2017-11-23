@@ -19,7 +19,7 @@ set -o functrace
 set -o nounset
 set -o pipefail
 
-# Hardcodes prefixs of all dependencies.
+# Hardcodes prefixes of all dependencies.
 #PATH#
 
 PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"

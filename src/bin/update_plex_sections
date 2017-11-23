@@ -1,0 +1,167 @@
+#!bash
+
+# Because the Plex tv scanner does not handle nested directories they must all
+# be added to sections manually.  However when adding a location to a section
+# via the API you must also add all the current directoires the the request.
+# Because of this, we break the library out in to a section per letter/number
+# to keep the request size under 8192k (the default of proxies like nginx).
+
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+
+# Hardcodes prefixes of all dependencies.
+#PATH#
+
+PREFIX="$(readlink -f "$(readlink -f "$(dirname "$(readlink -f "$0")")")"/..)"
+source "$PREFIX/share/conveyor/common.bash"
+
+if [ -z "$PLEX_SERVER_ADDRESS" ]; then
+  echo "PLEX_SERVER_ADDRESS not set" >&2
+  exit 1
+fi
+
+if [ -z "$PLEX_TOKEN" ]; then
+  echo "PLEX_TOKEN not set" >&2
+  exit 1
+fi
+
+# rc_gd_dir_id() {
+#   local -r Path="$1"
+#   local -r Command="
+#     rclone lsd \
+#       -vv \
+#       --low-level-retries 20 \
+#       --fast-list \
+#       --tpslimit 4 \
+#       --tpslimit-burst 10 \
+#       --dump-bodies
+#   "
+#   local iter=0
+#
+#   for i in `$Command "$Path" 2>&1 | sed -n '/^{/,/^}/p' | jq -rcM 2>&-`; do
+#     (( iter++ ))
+#     # Discard non-relevant information from headers
+#     if [ $iter -lt 4 ]; then
+#       continue
+#     fi
+#     echo "$i"
+#   done
+# }
+
+create_plex_section() {
+  local args
+  local -r sectionname="$1"
+
+  args+='&type=show'
+  args+='&agent=com.plexapp.agents.thetvdb'
+  args+='&scanner=Plex%20Series%20Scanner'
+  args+='&language=en'
+  args+='&importFromiTunes='
+  args+='&enableAutoPhotoTags='
+
+  # Specifies an arbitrary default location
+  # FIXME: support instances other than plex cloud
+  echo -X POST \
+    -H "X-Plex-Token: $PLEX_TOKEN" \
+    "$PLEX_SERVER_ADDRESS/library/sections?name=Television%20$sectionname$args&location=google%3A%2Fnon-existant-path%2F$sectionname"
+}
+
+get_plex_section_key() {
+  local -r section="$1"
+  local sectionkey
+  local sectionxml
+
+  echo curl \
+    -X GET \
+    -H "X-Plex-Token: $PLEX_TOKEN" \
+    "$PLEX_SERVER_ADDRESS/library/sections" >&2
+  sectionxml="$(
+    curl \
+      -X GET \
+      -H "X-Plex-Token: $PLEX_TOKEN" \
+      "$PLEX_SERVER_ADDRESS/library/sections"
+  )"
+
+  sectionkey="$(
+    echo "$sectionxml" |
+      xmllint --xpath \
+        "string(//MediaContainer/Directory[@title=\"Television $section\"]/@key)" -
+  )"
+
+  if [ -z "$sectionkey" ]; then
+    echo "missing section: $section" >&2
+    return 1
+  fi
+
+  echo "$sectionkey"
+}
+
+update_section_locations() {
+  local -a Args
+  local Dir1
+  local -r SectionKey="$1"
+  local -r LibraryPath="$2"
+  local -a LocationList
+
+  # Build location list
+  for Dir1 in `rc_lsd "$RCLONE_REMOTE$LibraryPath"`; do
+    echo "Dir1: $Dir1" >&2
+    #for Dir2 in `rc_lsd "gd:$LibraryPath/$Dir1"`; do
+      #echo "Dir2: $Dir2" >&2
+      #DirRaw="google:$LibraryPath/$Dir1/$Dir2"
+      DirRaw="google:$LibraryPath/$Dir1"
+      DirSanitized="$(url_sanitize "$DirRaw")"
+      LocationList+=("location=$DirSanitized")
+    #done
+  done
+
+  local IFS="&"
+  Args=(
+    "agent=com.plexapp.agents.thetvdb"
+    "${LocationList[@]}"
+  )
+  echo \
+    -X PUT \
+    -H "X-Plex-Token: $PLEX_TOKEN" \
+    "$PLEX_SERVER_ADDRESS/library/sections/$SectionKey?${Args[*]}"
+}
+
+update_plex_sections() {
+  local section
+  local sectionkey
+
+  for section in {0..9} {A..Z}; do
+    echo "section: $section" >&2
+    iter=0
+    sectionkey=
+    while [ -z "$sectionkey" ]; do
+      [ $iter -le 2 ]
+      sectionkey="$(get_plex_section_key "$section")"
+      if [ -z "$sectionkey" ]; then
+        echo "sectionkey is null" >&2
+        create_plex_section "$section"
+      fi
+      (( iter++ ))
+    done
+    if [ -z "$sectionkey" ]; then
+      echo "sectionkey is null" >&2
+      return 1
+    fi
+    echo "sectionkey: $sectionkey" >&2
+    update_section_locations "$sectionkey" "$RCLONE_REMOTE_SORTED_DIR/tv/${section,,}"
+  done
+}
+
+url_sanitize() {
+  local -r String="$1"
+
+  echo "$String" |
+    sed -e 's/:/%3A/g' \
+      -e 's/\s/%20/g' \
+      -e 's/\//%2F/g'
+}
+
+update_plex_sections

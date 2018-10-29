@@ -5,19 +5,7 @@ Download automation.
 
 ### Dependencies:
 
-- coreutils
-- findutils
-- gnuawk
-- gnugrep (w/ pcre) (will be removed)
-- gnused
 - guessit
-- jq
+- python3
 - rclone
-
-### Rewrite
-
-I have been working on a rewrite in golang now that I have mostly figured out
-how this should all work.  The golang variant with exception to guessit does
-not depend on any non-golang dependencies.  Since guessit is only used in the
-offload-complete script which can be run remotely, this should be a non-issue.
 

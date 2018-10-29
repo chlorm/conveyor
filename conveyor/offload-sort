@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2017-2018, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from guessit import guessit
+import os
+import re
+import subprocess
+
+def normalize_string(string):
+  # Non-breaking space -> space
+  remove_nonbreaking_spaces = re.sub(u'\xC2\xA0',u'\x20', string)
+  # FIXME: transliterate here, maybe pyicu?
+  #iconv -f utf-8 -t us-ascii//translit
+  lower = string.lower()
+  replace_colons = re.sub(r':[ ]+', '-', lower)
+  simplify_hyphens = re.sub(r'[ \.]+-[ \.]+', '-', replace_colons)
+  leading_whitespace = re.sub(r'^[ ]+', '', simplify_hyphens)
+  trailing_whitespace = re.sub(r'[ ]+$', '', leading_whitespace)
+  ampersand = re.sub(r'&', 'and', trailing_whitespace)
+  nonprintable_catchall = re.sub(r'[^a-zA-Z0-9\.\-_ ]+', '', ampersand)
+  return(nonprintable_catchall)
+
+def sort_chars(chars, string):
+  # FIXME: is this needed?
+  # Incase we are sorting previously sorted content guessit doesn't parse correctly.
+  conveyor_year_string = re.sub(r'_[1-2][0-9][0-9][0-9]$', '', string)
+  # Use a consistent word separator to simplify parsing
+  replace_seps_with_spaces = re.sub(r'[\.\-_]+', ' ', conveyor_year_string)
+  # FIXME: don't strip Die for english titles
+  # FIXME: don't strip LA, e.g. LA to Vegas, this currently doesn't because the A is upper cased.
+  # FIXME: add the.a.word as a test case.
+  # FIXME: las.vegas
+  # FIXME: multiple articles in a row, unlikely, need example if any exist.
+  # A, An, Das, Dem, Den, Der, Des, Die, El, La, Las, Le, Les, Lo, Los, Se, The, Un, Una, Unas, Unos
+  remove_articles = re.sub(r"^([Aa](|n)|[Dd](as|e[mnrs]|ie)|[Ee]l|[Ll][aeo](|s)|[Ss]e|[Tt]he|[Uu]n(|[ao])(|(?<=[ao])s))\s", '', replace_seps_with_spaces)
+  remove_spaces = re.sub(r'[ ]+', '', remove_articles)
+  return(remove_spaces[:chars].lower())
+
+def format_title(title):
+  return(re.sub('[ ]+', '.', title).lower())
+
+# FIXME: make year optional
+# FIXME: validate arguments
+# FIXME: match against known titles for corrections
+def build_remote_path_television(title, season):
+  TitleNml = normalize_string(title)
+
+  Char1 = sort_chars(1, TitleNml)
+  Char2 = sort_chars(2, TitleNml)
+
+  TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
+
+  # Pad season 0-9 with a leading zero.
+  if season <= 9:
+    SeasonPad = '0' + str(season)
+  else:
+    SeasonPad = str(season)
+
+  return(Char1 + '/' + Char2 + '/' + TitleFmt + '/season' + SeasonPad + '/')
+
+# FIXME: validate arquments
+def build_remote_path_movies(title, year):
+  TitleNml = normalize_string(title)
+
+  SortChar1 = sort_chars(1, TitleNml)
+  SortChar2 = sort_chars(2, TitleNml)
+
+  TitleFmt = re.sub(r'[ ]+', '.', TitleNml).lower()
+
+  return(SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + year)
+
+def compare_guessit_values(key, a, b):
+  aValue = ''.join(str(s) for s in a.get(key, {}))
+  print('\tcompare_guessit_values: A, {}, {}'.format(key, aValue))
+  bValue = ''.join(str(s) for s in b.get(key, {}))
+  print('\tcompare_guessit_values: B, {}, {}'.format(key, bValue))
+  return(aValue.lower() == bValue.lower())
+
+rclone_remote = 'gd'
+offload_dir = '/offload/-television/'
+sorted_dir = '/tank/tv/'
+rclone_args = [
+  'rclone',
+  '-vv',
+  '--stats', '5s',
+  '--low-level-retries', '20',
+  '--tpslimit', '1',
+  '--tpslimit-burst', '4',
+  '--transfers', '1'
+]
+rclone_args_list = rclone_args + ['lsf', '-R', '--files-only']
+rclone_args_move = rclone_args + ['move']
+
+offload_files_args = rclone_args_list +[rclone_remote + ':' + offload_dir]
+offload_files_raw = subprocess.check_output(offload_files_args).splitlines()
+# Subprocess uses byte encoding
+offload_files = []
+for i in offload_files_raw:
+  offload_files.append(i.decode())
+
+
+supported_exts = [
+  'avi',
+  'idx',
+  'iso',
+  'mkv',
+  'mov',
+  'mp4',
+  'mpg',
+  'mpeg',
+  'srt',
+  'sub',
+  'ts'
+]
+
+for offload_file in sorted(offload_files):
+  print('processing: {}'.format(offload_file))
+
+  ext = os.path.splitext(offload_file)[1][1:]
+  if ext not in supported_exts:
+    print('\tskipping: {}, not a supported file extension'.format(offload_file))
+    continue
+
+  guessit_file = guessit(os.path.basename(offload_file), {'--enforce-list'})
+  guessit_path = guessit(offload_file, {'--enforce-list'})
+
+  if not compare_guessit_values('type', guessit_file, guessit_path):
+    print('\tskipping: {}, parsed types do not match'.format(offload_file))
+    continue
+  type_final = guessit_path.get('type', {})[0]  # FIXME
+  # FIXME: remove once movies are supported
+  if type_final != 'episode':
+    print('\tskipping: {}, not an episode, got: {}'.format(offload_file, type_final))
+    continue
+
+  if not compare_guessit_values('title', guessit_file, guessit_path):
+    print('\tskipping: {}, parsed titles do not match'.format(offload_file))
+    #print('\tfile: {}, path: {}'.format(guessit_file.get('title', {}), guessit_path.get('title', {})))
+    continue
+  title_final = guessit_path.get('title', {})[0] # FIXME
+
+  # FIXME
+  #if not compare_guessit_values('year', guessit_file, guessit_path):
+  #  continue
+  #year_final = guessit_path.get('year', {}) # FIXME
+
+  #guessit_path_date_raw
+
+  if not compare_guessit_values('season', guessit_file, guessit_path):
+    continue
+  if type_final == 'episode':
+    try:
+      season_final = guessit_path.get('season', {})[0]
+    except:
+      continue
+
+  if type_final == 'episode':
+    destination_path = rclone_remote + ':' + os.path.join(sorted_dir, build_remote_path_television(title_final, season_final))
+  else:
+    # FIXME: add movie support
+    continue
+
+  # Convert to an Rclone path
+  source_file = rclone_remote + ':' + os.path.join(offload_dir, offload_file)
+  print('\tmoving: {} -> {}'.format(source_file, destination_path))
+  p = subprocess.Popen(rclone_args_move + [source_file, destination_path])
+  p.wait()
+
+p = subprocess.Popen(rclone_args + ['rmdirs', rclone_remote + ':' + offload_dir])
+p.wait()

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 downloads_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'Downloads'))
 data_dir = os.path.join(downloads_dir, 'Data')
 complete_dir = os.path.join(downloads_dir, 'Complete')

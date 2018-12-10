@@ -17,14 +17,12 @@
 import os
 import sys
 
+import config
+
 download_id = sys.argv[1]
 download_name = sys.argv[2]
 download_dir = sys.argv[3]
 download_path = os.path.abspath(os.path.join(download_dir, download_name))
-
-home = os.path.expanduser('~')
-complete_dir = os.path.abspath(os.path.join(home, 'Downloads', 'Complete'))
-data_dir = os.path.abspath(os.path.join(home, 'Downloads', 'Data'))
 
 def link_file(source, target):
   target_dir = os.path.dirname(target)
@@ -43,10 +41,10 @@ def link_file(source, target):
       raise
 
 if os.path.isfile(download_path):
-  link_file(download_path, os.path.join(complete_dir, os.path.basename(download_path)))
+  link_file(download_path, os.path.join(config.complete_dir, os.path.basename(download_path)))
 else:
   for root, dirs, files in os.walk(download_path):
     for file in files:
       source = os.path.abspath(os.path.join(root, file))
-      target = os.path.join(complete_dir, os.path.relpath(root, data_dir), file)
+      target = os.path.join(config.complete_dir, os.path.relpath(root, config.data_dir), file)
       link_file(source, target)

@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from guessit import guessit
 import os
-import rclone
 import re
 import subprocess
+
+from guessit import guessit
+import config
+import rclone
 
 def normalize_string(string):
   # Non-breaking space -> space
@@ -90,10 +92,6 @@ def compare_guessit_values(key, a, b):
   print('\tcompare_guessit_values: B, {}, {}'.format(key, bValue))
   return(aValue.lower() == bValue.lower())
 
-rclone_remote = 'gd'
-offload_dir = '/offload/-television/'
-sorted_dir = '/tank/tv/'
-
 supported_exts = [
   'avi',
   'idx',
@@ -109,9 +107,9 @@ supported_exts = [
 ]
 
 #rclone.rmdirs(rclone_remote + ':' + offload_dir)  # ???: probably not necessary before.
-rclone.dedupe(rclone_remote + ':' + offload_dir)
+rclone.dedupe(config.offload_dir + '-television/')
 
-offload_files = rclone.lsf(rclone_remote + ':' + offload_dir)
+offload_files = rclone.lsf(config.offload_dir + '-television/')
 
 for offload_file in sorted(offload_files):
   print('processing: {}'.format(offload_file))
@@ -155,15 +153,15 @@ for offload_file in sorted(offload_files):
       continue
 
   if type_final == 'episode':
-    destination_path = rclone_remote + ':' + os.path.join(sorted_dir, build_remote_path_television(title_final, season_final))
+    destination_path = os.path.join(config.sorted_dir + 'tv/', build_remote_path_television(title_final, season_final))
   else:
     # FIXME: add movie support
     continue
 
   # Convert to an Rclone path
-  source_file = rclone_remote + ':' + os.path.join(offload_dir, offload_file)
+  source_file = os.path.join(config.offload_dir + '-television/', offload_file)
   print('\tmoving: {} -> {}'.format(source_file, destination_path))
   rclone.move(source_file, destination_path)
 
-rclone.rmdirs(rclone_remote + ':' + offload_dir)
+rclone.rmdirs(config.offload_dir + '-television/')
 

@@ -16,6 +16,7 @@
 
 from guessit import guessit
 import os
+import rclone
 import re
 import subprocess
 
@@ -89,38 +90,9 @@ def compare_guessit_values(key, a, b):
   print('\tcompare_guessit_values: B, {}, {}'.format(key, bValue))
   return(aValue.lower() == bValue.lower())
 
-def rc_lsf(root):
-  rclone_args_list = rclone_args + ['lsf', '-R', '--files-only', root]
-  files_raw = subprocess.check_output(rclone_args_list).splitlines()
-  files = [ ]
-  for i in files_raw:
-    files.append(i.decode())
-  return files
-
-def rc_move(source_file, destination_path):
-  move = subprocess.Popen(rclone_args + [ 'move', source_file, destination_path])
-  move.wait()
-
-def rc_rmdirs(root):
-  rmdirs = subprocess.Popen(rclone_args + ['rmdirs', root])
-  rmdirs.wait()
-
-def rc_dedupe(root):
-  dedupe = subprocess.Popen(rclone_args + ['dedupe', '--dedupe-mode', 'skip', root])
-  dedupe.wait()
-
 rclone_remote = 'gd'
 offload_dir = '/offload/-television/'
 sorted_dir = '/tank/tv/'
-rclone_args = [
-  'rclone',
-  '-vv',
-  '--stats', '5s',
-  '--low-level-retries', '20',
-  '--tpslimit', '1',
-  '--tpslimit-burst', '4',
-  '--transfers', '1'
-]
 
 supported_exts = [
   'avi',
@@ -136,10 +108,10 @@ supported_exts = [
   'ts'
 ]
 
-#rc_rmdirs(rclone_remote + ':' + offload_dir)  # ???: probably not necessary before.
-rc_dedupe(rclone_remote + ':' + offload_dir)
+#rclone.rmdirs(rclone_remote + ':' + offload_dir)  # ???: probably not necessary before.
+rclone.dedupe(rclone_remote + ':' + offload_dir)
 
-offload_files = rc_lsf(rclone_remote + ':' + offload_dir)
+offload_files = rclone.lsf(rclone_remote + ':' + offload_dir)
 
 for offload_file in sorted(offload_files):
   print('processing: {}'.format(offload_file))
@@ -191,7 +163,7 @@ for offload_file in sorted(offload_files):
   # Convert to an Rclone path
   source_file = rclone_remote + ':' + os.path.join(offload_dir, offload_file)
   print('\tmoving: {} -> {}'.format(source_file, destination_path))
-  rc_move(source_file, destination_path)
+  rclone.move(source_file, destination_path)
 
-rc_rmdirs(rclone_remote + ':' + offload_dir)
+rclone.rmdirs(rclone_remote + ':' + offload_dir)
 

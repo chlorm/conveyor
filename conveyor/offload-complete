@@ -15,20 +15,10 @@
 # limitations under the License.
 
 import os
-import subprocess
+import rclone
 
 data_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'Downloads', 'Complete'))
 offload_dir = 'gd:/offload/'
-rclone_args = [
-  'rclone',
-  '-vv',
-  '--stats', '5s',
-  'move',
-  '--low-level-retries', '20',
-  '--tpslimit', '4',
-  '--tpslimit-burst', '10',
-  '--transfers', '1'
-]
 
 downloads = []
 failed_transfers = []
@@ -44,12 +34,13 @@ for download in sorted(downloads, key=os.path.getmtime):
   else:
     offload_path = offload_dir
   try:
-    p = subprocess.Popen(rclone_args + [download, offload_path])
-    p.wait()
+    rclone.move(download, offload_path)
   except Exception as error:
     failed_transfers.append(download)
     #raise('Transferring %s failed' % download)
     #print(repr(error))
+
+rclone.rmdirs(data_dir)
 
 print('\n\n\nFailed Transfers:\n\n')
 for i in failed_transfers:

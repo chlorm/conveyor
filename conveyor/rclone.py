@@ -17,23 +17,43 @@
 import subprocess
 
 def lsf(root):
-  rclone_args_list = rclone_args + ['lsf', '-R', '--files-only', root]
-  files_raw = subprocess.check_output(rclone_args_list).splitlines()
+  cmd = rclone_args + [
+    'lsf',
+    '-R',
+    '--files-only',
+    root
+  ]
+  files_raw = subprocess.check_output(cmd).splitlines()
   files = [ ]
   for i in files_raw:
     files.append(i.decode())
   return files
 
 def move(source_file, destination_path):
-  move = subprocess.Popen(rclone_args + [ 'move', '--delete-empty-src-dirs', source_file, destination_path])
+  cmd = rclone_args + [
+    'move',
+    '--delete-empty-src-dirs',
+    source_file,
+    destination_path
+  ]
+  move = subprocess.Popen(cmd)
   move.wait()
 
 def rmdirs(root):
-  rmdirs = subprocess.Popen(rclone_args + ['rmdirs', root])
+  cmd = rclone_args + [
+    'rmdirs',
+    root
+  ]
+  rmdirs = subprocess.Popen(cmd)
   rmdirs.wait()
 
 def dedupe(root):
-  dedupe = subprocess.Popen(rclone_args + ['dedupe', '--dedupe-mode', 'skip', root])
+  cmd = rclone_args + [
+    'dedupe',
+    '--dedupe-mode', 'skip',
+    root
+  ]
+  dedupe = subprocess.Popen(cmd)
   dedupe.wait()
 
 rclone_args = [

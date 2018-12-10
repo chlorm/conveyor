@@ -4,7 +4,7 @@
 
 import os
 
-home = os.environ['HOME']
+import config
 
 def find_files(path):
   f = []
@@ -13,8 +13,8 @@ def find_files(path):
       f.append(i)
   return f
 
-completeFiles = find_files(os.path.join(home, 'Downloads', 'Complete'))
+completeFiles = find_files(config.complete_dir)
 
-for x in sorted(find_files(os.path.join(home, 'Downloads', 'Data'))):
+for x in sorted(find_files(config.data_dir)):
   if x not in completeFiles:
     print(x)

@@ -63,6 +63,8 @@ rclone_args = [
   '--low-level-retries', '20',
   '--tpslimit', '1',
   '--tpslimit-burst', '4',
-  '--transfers', '1'
+  '--transfers', '1',
+  '--checksum',
+  '--immutable'
 ]
 

@@ -5,7 +5,7 @@ Download automation.
 
 ### Dependencies:
 
-- guessit
-- python3
+- Python 3
+  + guessit
+  + requests
 - rclone
-

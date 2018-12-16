@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# Copyright (c) 2017-2018, Cody Opel <codyopel@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Because the Plex Series Scanner does not handle nested directories, they must
+# all be added as separate locations to a section.  However when adding a
+# location to a section via the API you must also add all the current
+# directories the the request.  This overwrite the locations of a section each
+# time it is run.
+
+# WARNING: Most proxies have a default max request size that is to low for this
+#          to work.  It is recommened to run this from the same machine running
+#          plex to circumvent the proxy and not alter proxy settings.
+
+import config
+import os
+import rclone
+import requests
+import xml.etree.ElementTree as ElementTree
+
+PLEX_SERVER_ADDRESS = 'http://127.0.0.1:32400'
+PLEX_TOKEN = ''
+MOUNT_ROOT='/srv/rclone/tv/'
+
+def section_create(section):
+  address = PLEX_SERVER_ADDRESS + '/library/sections'
+  headers = {
+    'X-Plex-Token': PLEX_TOKEN,
+  }
+  params = {
+    'name': section,
+    'type': 'show',
+    'agent': 'com.plexapp.agents.thetvdb',
+    'scanner': 'Plex Series Scanner',
+    'language': 'en',
+    'importFromiTunes': '',
+    'enableAutoPhotoTags': '',
+    # Specifies an arbitrary default location
+    'location': ('/non-existant-path/' + section)
+  }
+  response = requests.post(address, headers=headers, params=params)
+
+def section_get_key(section):
+  address = PLEX_SERVER_ADDRESS + '/library/sections/'
+  headers = {
+    'X-Plex-Token': PLEX_TOKEN,
+  }
+  xml = requests.get(PLEX_SERVER_ADDRESS + '/library/sections', headers=headers)
+  tree = ElementTree.fromstring(xml.content)
+  sectionkey = tree.find("./Directory[@title='" + section + "']").attrib["key"]
+  return sectionkey
+
+def section_set_locations(section, paths):
+  address = PLEX_SERVER_ADDRESS + '/library/sections/' + section_get_key(section)
+  headers = {
+    'X-Plex-Token': PLEX_TOKEN,
+  }
+  params = {
+    'agent': 'com.plexapp.agents.thetvdb',
+    'location': paths
+  }
+  response = requests.put(address, headers=headers, params=params)
+
+# Debugging
+#import logging
+#import http.client as http_client
+#http_client.HTTPConnection.debuglevel = 1
+#logging.basicConfig()
+#logging.getLogger().setLevel(logging.DEBUG)
+#requests_log = logging.getLogger("requests.packages.urllib3")
+#requests_log.setLevel(logging.DEBUG)
+#requests_log.propagate = True
+
+# Build location list
+# FIXME: use python directory iterator
+dirs = [ ]
+for x in rclone.lsd(MOUNT_ROOT):
+  for y in rclone.lsd(os.path.join(MOUNT_ROOT, x)):
+    dirs.append(os.path.join(MOUNT_ROOT, x, y))
+
+if section_get_key('Television') == '':
+  section_create('Television')
+section_set_locations('Television', dirs)

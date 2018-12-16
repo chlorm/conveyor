@@ -14,6 +14,20 @@
 
 import subprocess
 
+# FIXME: make recursion optional
+def lsd(root):
+  cmd = rclone_args + [
+    'lsf',
+    '--dirs-only',
+    root
+  ]
+  dirs_raw = subprocess.check_output(cmd).splitlines()
+  dirs = [ ]
+  for i in dirs_raw:
+    dirs.append(i.decode())
+  return dirs
+
+# FIXME: make recursion optional
 def lsf(root):
   cmd = rclone_args + [
     'lsf',

@@ -19,5 +19,4 @@ data_dir = os.path.join(downloads_dir, 'Data')
 complete_dir = os.path.join(downloads_dir, 'Complete')
 rclone_remote = 'gd'
 offload_dir = rclone_remote + ':/offload/'
-sourted_dir = rclone_remote + ':/tank/'
-
+sorted_dir = rclone_remote + ':/tank/'

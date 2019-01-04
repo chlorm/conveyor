@@ -32,6 +32,7 @@ import xml.etree.ElementTree as ElementTree
 PLEX_SERVER_ADDRESS = 'http://127.0.0.1:32400'
 PLEX_TOKEN = ''
 MOUNT_ROOT='/srv/rclone/tv/'
+LIBRARY_NAME='Television'
 
 def section_create(section):
   address = PLEX_SERVER_ADDRESS + '/library/sections'
@@ -89,6 +90,8 @@ for x in rclone.lsd(MOUNT_ROOT):
   for y in rclone.lsd(os.path.join(MOUNT_ROOT, x)):
     dirs.append(os.path.join(MOUNT_ROOT, x, y))
 
-if section_get_key('Television') == '':
-  section_create('Television')
-section_set_locations('Television', dirs)
+try:
+  section_get_key(LIBRARY_NAME)
+except:
+  section_create(LIBRARY_NAME)
+section_set_locations(LIBRARY_NAME, dirs)

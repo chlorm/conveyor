@@ -12,17 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import re
 
-downloads_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'Downloads'))
-data_dir = os.path.join(downloads_dir, 'Data')
-complete_dir = os.path.join(downloads_dir, 'Complete')
-rclone_remote = 'gd'
-offload_dir = rclone_remote + ':/offload/'
-sorted_dir = rclone_remote + ':/tank/'
+import strings
 
-# Plex
-PLEX_SERVER_ADDRESS = 'http://127.0.0.1:32400'
-PLEX_TOKEN = ''
-MOUNT_ROOT='/srv/rclone/tv/'
-LIBRARY_NAME='Television'
+# FIXME: make year optional
+# FIXME: validate arguments
+# FIXME: match against known titles for corrections
+def build_remote_path_television(title, season):
+  TitleNml = strings.normalize_string(title)
+
+  Char1 = strings.sort_chars(1, TitleNml)
+  Char2 = strings.sort_chars(2, TitleNml)
+
+  TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
+
+  # Pad season 0-9 with a leading zero.
+  if season <= 9:
+    SeasonPad = '0' + str(season)
+  else:
+    SeasonPad = str(season)
+
+  return(Char1 + '/' + Char2 + '/' + TitleFmt + '/season' + SeasonPad + '/')

@@ -19,9 +19,6 @@ import os
 import config
 import rclone
 
-data_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'Downloads', 'Complete'))
-offload_dir = 'gd:/offload/'
-
 downloads = []
 failed_transfers = []
 for entry in os.scandir(config.complete_dir):

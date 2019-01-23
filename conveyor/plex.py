@@ -1,3 +1,5 @@
+from xml.etree import ElementTree
+
 import requests
 
 import config

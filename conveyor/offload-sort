@@ -18,10 +18,11 @@ import os
 import re
 import subprocess
 
-from guessit import guessit
 import config
 import rclone
 import strings
+
+from guessit import guessit
 
 def format_title(title):
   return(re.sub('[ ]+', '.', title).lower())

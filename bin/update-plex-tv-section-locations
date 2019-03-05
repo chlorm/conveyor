@@ -47,7 +47,8 @@ for x in os.scandir(config.MOUNT_ROOT):
 
 
 try:
-  plex.section_get_key(config.LIBRARY_NAME)
+  sectionKey = plex.section_get_key(config.LIBRARY_NAME)
 except:
   plex.section_create(config.LIBRARY_NAME)
-plex.section_set_locations(config.LIBRARY_NAME, dirs)
+  sectionKey = plex.section_get_key(config.LIBRARY_NAME)
+plex.section_set_locations(sectionKey, dirs)

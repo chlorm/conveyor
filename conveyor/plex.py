@@ -32,8 +32,8 @@ def section_get_key(section):
   sectionkey = tree.find("./Directory[@title='" + section + "']").attrib["key"]
   return sectionkey
 
-def section_set_locations(section, paths):
-  address = config.PLEX_SERVER_ADDRESS + '/library/sections/' + section_get_key(section)
+def section_set_locations(sectionkey, paths):
+  address = config.PLEX_SERVER_ADDRESS + '/library/sections/' + str(sectionkey)
   headers = {
     'X-Plex-Token': config.PLEX_TOKEN,
   }

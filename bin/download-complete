@@ -17,7 +17,7 @@
 import os
 import sys
 
-import config
+from conveyor import config
 
 download_id = sys.argv[1]
 download_name = sys.argv[2]

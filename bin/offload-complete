@@ -16,8 +16,7 @@
 
 import os
 
-import config
-import rclone
+from conveyor import config, rclone
 
 downloads = []
 failed_transfers = []

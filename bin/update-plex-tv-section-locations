@@ -25,8 +25,7 @@
 
 import os
 
-import config
-import plex
+from conveyor import config, plex
 
 #import requests
 

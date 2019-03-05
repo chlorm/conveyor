@@ -4,7 +4,7 @@
 
 import os
 
-import config
+from conveyor import config
 
 def find_files(path):
   f = []

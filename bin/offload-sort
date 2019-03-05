@@ -18,10 +18,7 @@ import os
 import re
 import subprocess
 
-import config
-import rclone
-import strings
-
+from conveyor import config, rclone, strings
 from guessit import guessit
 
 def format_title(title):

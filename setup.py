@@ -14,7 +14,8 @@ setup(
       'conveyor'
     ],
     install_requires=[
-      'guessit'
+      'guessit',
+      'requests'
     ],
     # TODO: convert scripts to entry_points functions.
     scripts=[

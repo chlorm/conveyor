@@ -7,7 +7,7 @@ with import <nixpkgs> { }; {
     ] ++ (with python3Packages; [
       guessit
       requests
-    ]) ++ (with goPackages [
+    ]) ++ (with goPackages; [
       rclone.bin
     ]);
   };

@@ -14,23 +14,36 @@
 
 import re
 
-import strings
+from conveyor import strings
+
 
 # FIXME: make year optional
 # FIXME: validate arguments
 # FIXME: match against known titles for corrections
-def build_remote_path_television(title, season):
-  TitleNml = strings.normalize_string(title)
+def build_remote_path_television(title: str, season: int) -> str:
+    TitleNml = strings.normalize_string(str(title))
 
-  Char1 = strings.sort_chars(1, TitleNml)
-  Char2 = strings.sort_chars(2, TitleNml)
+    Char1 = strings.sort_chars(1, TitleNml)
+    Char2 = strings.sort_chars(2, TitleNml)
 
-  TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
+    TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
 
-  # Pad season 0-9 with a leading zero.
-  if season <= 9:
-    SeasonPad = '0' + str(season)
-  else:
-    SeasonPad = str(season)
+    # Pad season 0-9 with a leading zero.
+    if season <= 9:
+        SeasonPad = '0' + str(season)
+    else:
+        SeasonPad = str(season)
 
-  return(Char1 + '/' + Char2 + '/' + TitleFmt + '/season' + SeasonPad + '/')
+    return (Char1 + '/' + Char2 + '/' + TitleFmt + '/season' + SeasonPad + '/')
+
+
+# FIXME: validate arquments
+def build_remote_path_movies(title: str, year: int) -> str:
+    TitleNml = normalize_string(title)
+
+    SortChar1 = sort_chars(1, TitleNml)
+    SortChar2 = sort_chars(2, TitleNml)
+
+    TitleFmt = re.sub(r'[ ]+', '.', TitleNml).lower()
+
+    return (SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + year)

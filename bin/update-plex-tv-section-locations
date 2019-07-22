@@ -40,15 +40,14 @@ from conveyor import config, plex
 #requests_log.propagate = True
 
 # Build location list
-dirs = [ ]
+dirs = []
 for x in os.scandir(config.MOUNT_ROOT):
-  for y in os.scandir(os.path.join(config.MOUNT_ROOT, x)):
-    dirs.append(os.path.join(config.MOUNT_ROOT, x, y))
-
+    for y in os.scandir(os.path.join(config.MOUNT_ROOT, x)):
+        dirs.append(os.path.join(config.MOUNT_ROOT, x, y))
 
 try:
-  sectionKey = plex.section_get_key(config.LIBRARY_NAME)
+    sectionKey = plex.section_get_key(config.LIBRARY_NAME)
 except:
-  plex.section_create(config.LIBRARY_NAME)
-  sectionKey = plex.section_get_key(config.LIBRARY_NAME)
+    plex.section_create(config.LIBRARY_NAME)
+    sectionKey = plex.section_get_key(config.LIBRARY_NAME)
 plex.section_set_locations(sectionKey, dirs)

@@ -7,29 +7,28 @@ setup(
     version='0.0.0',
     description='Download automation',
     #long_description=,
+    #long_description_content_type='text/markdown',
     author='Cody Opel',
     author_email='cwopel@chlorm.net',
     url='https://github.com/chlorm/conveyor',
-    packages=[
-      'conveyor'
-    ],
+    packages=['conveyor'],
     install_requires=[
-      'guessit',
-      'requests'
+        'guessit',
+        'requests',
     ],
     # TODO: convert scripts to entry_points functions.
     scripts=[
-      'bin/conveyor-data-stranded-files',
-      'bin/download-complete',
-      'bin/offload-complete',
-      'bin/offload-sort',
-      'bin/update-plex-tv-section-locations'
+        'bin/conveyor-data-stranded-files',
+        'bin/download-complete',
+        'bin/offload-complete',
+        'bin/offload-sort',
+        'bin/update-plex-tv-section-locations',
     ],
     include_package_data=True,
     license='Apache Software License 2.0',
     classifiers=[
-      'License :: OSI Approved :: Apache Software License',
-      'Programming Language :: Python',
-      'Programming Language :: Python :: 3'
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
     ],
 )

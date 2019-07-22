@@ -17,34 +17,21 @@
 import os
 import sys
 
-from conveyor import config
+from conveyor import config, oslink
 
 download_id = sys.argv[1]
 download_name = sys.argv[2]
 download_dir = sys.argv[3]
 download_path = os.path.abspath(os.path.join(download_dir, download_name))
 
-def link_file(source, target):
-  target_dir = os.path.dirname(target)
-  # Create directory scructure
-  if not os.path.exists(target_dir):
-    try:
-      print("creating directory: {}".format(target_dir))
-      os.makedirs(target_dir)
-    except OSError:
-      raise
-  if not os.path.exists(target):
-    try:
-      print("linking: {} => {}".format(source, target))
-      os.link(source, target)
-    except OSError:
-      raise
-
 if os.path.isfile(download_path):
-  link_file(download_path, os.path.join(config.complete_dir, os.path.basename(download_path)))
+    oslink.link(
+        download_path,
+        os.path.join(config.complete_dir, os.path.basename(download_path)))
 else:
-  for root, dirs, files in os.walk(download_path):
-    for file in files:
-      source = os.path.abspath(os.path.join(root, file))
-      target = os.path.join(config.complete_dir, os.path.relpath(root, config.data_dir), file)
-      link_file(source, target)
+    for root, dirs, files in os.walk(download_path):
+        for file in files:
+            source = os.path.abspath(os.path.join(root, file))
+            target = os.path.join(config.complete_dir,
+                                  os.path.relpath(root, config.data_dir), file)
+            oslink.link(source, target)

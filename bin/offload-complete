@@ -21,25 +21,26 @@ from conveyor import config, rclone
 downloads = []
 failed_transfers = []
 for entry in os.scandir(config.complete_dir):
-  downloads.append(os.path.join(config.complete_dir, entry.name))
+    downloads.append(os.path.join(config.complete_dir, entry.name))
 
 for download in sorted(downloads, key=os.path.getmtime):
-  print(download)
-  # Rclone does not work like the Unix `mv` command, the target directory must also be
-  # specified when moving a directory.
-  if os.path.isdir(download):
-    offload_path = os.path.join(config.offload_dir, os.path.basename(download))
-  else:
-    offload_path = config.offload_dir
-  try:
-    rclone.move(download, offload_path)
-  except Exception as error:
-    failed_transfers.append(download)
-    #raise('Transferring %s failed' % download)
-    #print(repr(error))
+    print(download)
+    # Rclone does not work like the Unix `mv` command, the target directory must also be
+    # specified when moving a directory.
+    if os.path.isdir(download):
+        offload_path = os.path.join(config.offload_dir,
+                                    os.path.basename(download))
+    else:
+        offload_path = config.offload_dir
+    try:
+        rclone.move(download, offload_path)
+    except Exception as error:
+        failed_transfers.append(download)
+        #raise('Transferring %s failed' % download)
+        #print(repr(error))
 
 rclone.rmdirs(config.complete_dir)
 
 print('\n\n\nFailed Transfers:\n\n')
 for i in failed_transfers:
-  print(i)
+    print(i)

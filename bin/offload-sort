@@ -18,61 +18,34 @@ import os
 import re
 import subprocess
 
-from conveyor import config, rclone, strings
+from conveyor import config, paths, rclone
 from guessit import guessit
 
+
 def format_title(title):
-  return(re.sub('[ ]+', '.', title).lower())
+    return (re.sub('[ ]+', '.', title).lower())
 
-# FIXME: make year optional
-# FIXME: validate arguments
-# FIXME: match against known titles for corrections
-def build_remote_path_television(title, season):
-  TitleNml = strings.normalize_string(title)
-
-  Char1 = strings.sort_chars(1, TitleNml)
-  Char2 = strings.sort_chars(2, TitleNml)
-
-  TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
-
-  # Pad season 0-9 with a leading zero.
-  if season <= 9:
-    SeasonPad = '0' + str(season)
-  else:
-    SeasonPad = str(season)
-
-  return(Char1 + '/' + Char2 + '/' + TitleFmt + '/season' + SeasonPad + '/')
-
-# FIXME: validate arquments
-def build_remote_path_movies(title, year):
-  TitleNml = normalize_string(title)
-
-  SortChar1 = sort_chars(1, TitleNml)
-  SortChar2 = sort_chars(2, TitleNml)
-
-  TitleFmt = re.sub(r'[ ]+', '.', TitleNml).lower()
-
-  return(SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + year)
 
 def compare_guessit_values(key, a, b):
-  aValue = ''.join(str(s) for s in a.get(key, {}))
-  print('\tcompare_guessit_values: A, {}, {}'.format(key, aValue))
-  bValue = ''.join(str(s) for s in b.get(key, {}))
-  print('\tcompare_guessit_values: B, {}, {}'.format(key, bValue))
-  return(aValue.lower() == bValue.lower())
+    aValue = ''.join(str(s) for s in a.get(key, {}))
+    print('\tcompare_guessit_values: A, {}, {}'.format(key, aValue))
+    bValue = ''.join(str(s) for s in b.get(key, {}))
+    print('\tcompare_guessit_values: B, {}, {}'.format(key, bValue))
+    return (aValue.lower() == bValue.lower())
+
 
 supported_exts = [
-  'avi',
-  'idx',
-  'iso',
-  'mkv',
-  'mov',
-  'mp4',
-  'mpg',
-  'mpeg',
-  'srt',
-  'sub',
-  'ts'
+    'avi',
+    'idx',
+    'iso',
+    'mkv',
+    'mov',
+    'mp4',
+    'mpg',
+    'mpeg',
+    'srt',
+    'sub',
+    'ts',
 ]
 
 #rclone.rmdirs(rclone_remote + ':' + offload_dir)  # ???: probably not necessary before.
@@ -81,55 +54,61 @@ rclone.dedupe(config.offload_dir + '-television/')
 offload_files = rclone.lsf(config.offload_dir + '-television/')
 
 for offload_file in sorted(offload_files):
-  print('processing: {}'.format(offload_file))
+    print('processing: {}'.format(offload_file))
 
-  ext = os.path.splitext(offload_file)[1][1:]
-  if ext not in supported_exts:
-    print('\tskipping: {}, not a supported file extension'.format(offload_file))
-    continue
+    ext = os.path.splitext(offload_file)[1][1:]
+    if ext not in supported_exts:
+        print('\tskipping: {}, not a supported file extension'.format(
+            offload_file))
+        continue
 
-  guessit_file = guessit(os.path.basename(offload_file), {'--enforce-list'})
-  guessit_path = guessit(offload_file, {'--enforce-list'})
+    guessit_file = guessit(os.path.basename(offload_file), {'--enforce-list'})
+    guessit_path = guessit(offload_file, {'--enforce-list'})
 
-  if not compare_guessit_values('type', guessit_file, guessit_path):
-    print('\tskipping: {}, parsed types do not match'.format(offload_file))
-    continue
-  type_final = guessit_path.get('type', {})[0]  # FIXME
-  # FIXME: remove once movies are supported
-  if type_final != 'episode':
-    print('\tskipping: {}, not an episode, got: {}'.format(offload_file, type_final))
-    continue
+    if not compare_guessit_values('type', guessit_file, guessit_path):
+        print('\tskipping: {}, parsed types do not match'.format(offload_file))
+        continue
+    type_final = guessit_path.get('type', {})[0]  # FIXME
+    # FIXME: remove once movies are supported
+    if type_final != 'episode':
+        print('\tskipping: {}, not an episode, got: {}'.format(
+            offload_file, type_final))
+        continue
 
-  if not compare_guessit_values('title', guessit_file, guessit_path):
-    print('\tskipping: {}, parsed titles do not match'.format(offload_file))
-    #print('\tfile: {}, path: {}'.format(guessit_file.get('title', {}), guessit_path.get('title', {})))
-    continue
-  title_final = guessit_path.get('title', {})[0] # FIXME
+    if not compare_guessit_values('title', guessit_file, guessit_path):
+        print(
+            '\tskipping: {}, parsed titles do not match'.format(offload_file))
+        #print('\tfile: {}, path: {}'.format(guessit_file.get('title', {}), guessit_path.get('title', {})))
+        continue
+    title_final = guessit_path.get('title', {})[0]  # FIXME
 
-  # FIXME
-  #if not compare_guessit_values('year', guessit_file, guessit_path):
-  #  continue
-  #year_final = guessit_path.get('year', {}) # FIXME
+    # FIXME
+    #if not compare_guessit_values('year', guessit_file, guessit_path):
+    #  continue
+    #year_final = guessit_path.get('year', {}) # FIXME
 
-  #guessit_path_date_raw
+    #guessit_path_date_raw
 
-  if not compare_guessit_values('season', guessit_file, guessit_path):
-    continue
-  if type_final == 'episode':
-    try:
-      season_final = guessit_path.get('season', {})[0]
-    except:
-      continue
+    if not compare_guessit_values('season', guessit_file, guessit_path):
+        continue
+    if type_final == 'episode':
+        try:
+            season_final = guessit_path.get('season', {})[0]
+        except:
+            continue
 
-  if type_final == 'episode':
-    destination_path = os.path.join(config.sorted_dir + 'tv/', build_remote_path_television(title_final, season_final))
-  else:
-    # FIXME: add movie support
-    continue
+    if type_final == 'episode':
+        destination_path = os.path.join(
+            config.sorted_dir + 'tv/',
+            paths.build_remote_path_television(title_final, season_final))
+    else:
+        # FIXME: add movie support
+        continue
 
-  # Convert to an Rclone path
-  source_file = os.path.join(config.offload_dir + '-television/', offload_file)
-  print('\tmoving: {} -> {}'.format(source_file, destination_path))
-  rclone.move(source_file, destination_path)
+    # Convert to an Rclone path
+    source_file = os.path.join(config.offload_dir + '-television/',
+                               offload_file)
+    print('\tmoving: {} -> {}'.format(source_file, destination_path))
+    rclone.move(source_file, destination_path)
 
 rclone.rmdirs(config.offload_dir + '-television/')

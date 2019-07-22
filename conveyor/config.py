@@ -14,7 +14,8 @@
 
 import os
 
-downloads_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'Downloads'))
+downloads_dir = os.path.abspath(
+    os.path.join(os.path.expanduser('~'), 'Downloads'))
 data_dir = os.path.join(downloads_dir, 'Data')
 complete_dir = os.path.join(downloads_dir, 'Complete')
 rclone_remote = 'gd'
@@ -24,5 +25,5 @@ sorted_dir = rclone_remote + ':/tank/'
 # Plex
 PLEX_SERVER_ADDRESS = 'http://127.0.0.1:32400'
 PLEX_TOKEN = ''
-MOUNT_ROOT='/srv/rclone/tv/'
-LIBRARY_NAME='Television'
+MOUNT_ROOT = '/srv/rclone/tv/'
+LIBRARY_NAME = 'Television'

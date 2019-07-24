@@ -22,7 +22,7 @@ def symlink_enforce_target(source, target):
     return
 
 
-def link_impl(source: str, target: str, symbolic=False, force: bool) -> None:
+def link_impl(source: str, target: str, symbolic=False, force=False) -> None:
     targetDir = os.path.dirname(target)
     # Create directory scructure
     if not os.path.exists(targetDir):
@@ -51,8 +51,8 @@ def link_impl(source: str, target: str, symbolic=False, force: bool) -> None:
 
 
 def link(source: str, target: str, force=False) -> None:
-    link_impl(source, target, force)
+    link_impl(source, target, force=force)
 
 
 def symlink(source: str, target: str, force=False) -> None:
-    link_impl(source, target, symbolic=True, force)
+    link_impl(source, target, symbolic=True, force=force)

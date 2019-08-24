@@ -2,21 +2,28 @@
 
 # List files in Data directory not present in the Complete directory.
 
-import os
+import os, pathlib
 
 from conveyor import config
 
 
 def find_files(path):
     f = []
-    for i in os.listdir(path):
-        if os.path.isfile(os.path.join(path, i)):
-            f.append(i)
+    for root, dir, files in os.walk(path):
+        for file in files:
+            f.append(os.path.relpath(os.path.join(root, file), path))
     return f
 
 
 completeFiles = find_files(config.complete_dir)
 
-for x in sorted(find_files(config.data_dir)):
+l = []
+for x in find_files(config.data_dir):
     if x not in completeFiles:
-        print(x)
+        l.append(pathlib.Path(x).parts[0])
+
+for i in sorted(list(set(l)), key=str.lower):
+    if os.path.isdir(os.path.join(config.data_dir, i)):
+        print("\033[94m{}/\033[0m".format(i))
+    else:
+        print(i)

@@ -34,7 +34,11 @@ def link_impl(source: str, target: str, symbolic=False, force=False) -> None:
 
     if not os.path.exists(target):
         try:
-            print("symlinking: {} => {}".format(source, target))
+            if symbolic:
+                t = "sym"
+            else:
+                t = "hard"
+            print("{}linking: {} => {}".format(t, source, target))
             if symbolic:
                 os.symlink(source, target)
             else:

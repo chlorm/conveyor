@@ -41,9 +41,9 @@ def build_remote_path_television(title: str, season: int) -> str:
 def build_remote_path_movies(title: str, year: int) -> str:
     TitleNml = strings.normalize(str(title))
 
-    SortChar1 = sort_chars(1, TitleNml)
-    SortChar2 = sort_chars(2, TitleNml)
+    SortChar1 = strings.sort_chars(1, TitleNml)
+    SortChar2 = strings.sort_chars(2, TitleNml)
 
     TitleFmt = strings.sep_periods(TitleNml)
 
-    return (SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + year)
+    return (SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + str(year))

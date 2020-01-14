@@ -26,7 +26,7 @@ def build_remote_path_television(title: str, season: int) -> str:
     Char1 = strings.sort_chars(1, TitleNml)
     Char2 = strings.sort_chars(2, TitleNml)
 
-    TitleFmt = re.sub(r'[ ]+', '.', TitleNml)
+    TitleFmt = strings.sep_periods(TitleNml)
 
     # Pad season 0-9 with a leading zero.
     if season <= 9:
@@ -44,6 +44,6 @@ def build_remote_path_movies(title: str, year: int) -> str:
     SortChar1 = sort_chars(1, TitleNml)
     SortChar2 = sort_chars(2, TitleNml)
 
-    TitleFmt = re.sub(r'[ ]+', '.', TitleNml).lower()
+    TitleFmt = strings.sep_periods(TitleNml)
 
     return (SortChar1 + '/' + SortChar2 + '/' + TitleFmt + '_' + year)

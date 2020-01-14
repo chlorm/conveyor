@@ -15,8 +15,7 @@
 import re
 
 
-# FIXME: rename function to more obvious name
-def normalize_string(string: str) -> str:
+def normalize(string: str) -> str:
     # Non-breaking space -> space
     remove_nonbreaking_spaces = re.sub(u'\xC2\xA0', u'\x20', string)
     # FIXME: transliterate here, maybe pyicu?

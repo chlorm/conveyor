@@ -21,7 +21,7 @@ from conveyor import strings
 # FIXME: validate arguments
 # FIXME: match against known titles for corrections
 def build_remote_path_television(title: str, season: int) -> str:
-    TitleNml = strings.normalize_string(str(title))
+    TitleNml = strings.normalize(str(title))
 
     Char1 = strings.sort_chars(1, TitleNml)
     Char2 = strings.sort_chars(2, TitleNml)
@@ -39,7 +39,7 @@ def build_remote_path_television(title: str, season: int) -> str:
 
 # FIXME: validate arquments
 def build_remote_path_movies(title: str, year: int) -> str:
-    TitleNml = normalize_string(title)
+    TitleNml = strings.normalize(str(title))
 
     SortChar1 = sort_chars(1, TitleNml)
     SortChar2 = sort_chars(2, TitleNml)

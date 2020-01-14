@@ -49,5 +49,5 @@ def sort_chars(chars: int, string: str) -> str:
     return (remove_spaces[:chars].lower())
 
 
-def format_title(title: str) -> str:
-    return (re.sub('[ ]+', '.', title).lower())
+def sep_periods(s: str) -> str:
+    return (re.sub('[ ]+', '.', s))

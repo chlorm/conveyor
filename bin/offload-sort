@@ -22,10 +22,6 @@ from conveyor import config, paths, rclone
 from guessit import guessit
 
 
-def format_title(title):
-    return (re.sub('[ ]+', '.', title).lower())
-
-
 def compare_guessit_values(key, a, b):
     aValue = ''.join(str(s) for s in a.get(key, {}))
     print('\tcompare_guessit_values: A, {}, {}'.format(key, aValue))
